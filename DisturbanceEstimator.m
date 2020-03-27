@@ -64,7 +64,7 @@ classdef DisturbanceEstimator
             if isempty(obj.waypoints)
                 ids                 = 1:obj.N;
             else
-                ids                 = find(sum((x(1:2,:) - obj.waypoints).^2, 1) < 0.05);
+                ids                 = find(sum((x(1:2,:) - obj.waypoints(1:2,:)).^2, 1) < 0.05);
             end
             obj.waypoints(:,ids)    = obj.gen_next_waypoint(x, ids);
         end
@@ -79,11 +79,12 @@ classdef DisturbanceEstimator
             %
             N_free                  = length(ids);
             if isempty(obj.uncertainty_grid)
-                p                       = rand([2,N_free]) - 0.5;
+                p                       = rand([3,N_free]) - 0.5;
                 p(1,:)                  = (diff(obj.bds(1:2))) * p(1,:);   % Stretch x
                 p(2,:)                  = (diff(obj.bds(3:4))) * p(2,:);   % Stretch y
+                p(3,:)                  = 2 * pi * p(3,:);                 % Stretch theta [-pi, pi]
             else
-                p                       = obj.uncertainty_grid(1:N_free, 1:2)';
+                p                       = obj.uncertainty_grid(1:N_free, 1:obj.n)';
                 obj.uncertainty_grid(1:N_free) = [];
             end
         end
@@ -125,19 +126,19 @@ classdef DisturbanceEstimator
             obj.data  = zeros([0,2*obj.n+obj.m]);
         end
         
-        function obj = append_traj_data(obj, x, u, x_old, dxu_old)
+        function obj = append_traj_data(obj, x, dxu, x_old, dxu_old)
             
             if size(obj.data,1) < 100
                 ids = 1:obj.N;
             else
-                ids = find(sum((x(1:2,:) - obj.waypoints).^2, 1) < 0.05);
+                ids = find(sum((x(1:2,:) - obj.waypoints(1:2,:)).^2, 1) < 0.05);
             end
             
             x_dot = x(:,ids) - x_old(:,ids);
             x_dot(3,:) = atan2(sin(x_dot(3,:)), cos(x_dot(3,:)));
             x_dot = x_dot / obj.dt;
             u     = dxu_old(:,ids);
-            new_data = [x(:,ids); x_dot; u]'; % new data shape: x x_dot u
+            new_data = [x_old(:,ids); x_dot; u]'; % new data shape: x x_dot u
             new_data(any(abs(u) < 0.001, 1)',:) = []; % Prune data with 0 u
             obj.data(end+1:end+size(new_data,1),:) = new_data;
             obj.num_new_data = obj.num_new_data + size(new_data,1);

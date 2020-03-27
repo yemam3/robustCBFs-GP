@@ -36,10 +36,10 @@ function [si_position_controller] = create_si_position_controller_v2(varargin)
         [M_targets, N_targets] = size(targets); 
         
         assert(M == 3, 'Row size of states (%i) must be 3', M); 
-        assert(M_targets== 2, 'Row size of SI targets (%i) must be 2', M_targets);
+        assert(M_targets== 3, 'Row size of targets (%i) must be 3', M_targets);
         assert(N==N_targets, 'Column size of x (%i) must be the same as targets (%i)', N, N_targets);
         
-        dx = gains*(targets - x(1:2,:));
+        dx = gains*(targets(1:2,:) - x(1:2,:));
         dxu = si_to_uni(dx, x);
         
         dxu(abs(dxu)<0.03) = sign(dxu(abs(dxu)<0.03)) * 0.1; % Need to make sure robots are always moving

@@ -40,6 +40,7 @@ for t = 1:iterations
     if t > 1
         disturb_estimator = disturb_estimator.append_traj_data(x, dxu, x_old, dxu_old);
     end
+
     %% Send velocities to agents
     % Set velocities of agents 1,...,N
     r.set_velocities(1:N, dxu);
