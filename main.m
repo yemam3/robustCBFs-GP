@@ -24,7 +24,6 @@ for t = 1:iterations
     
     disturb_estimator = disturb_estimator.fit_data();
 
-     
     % Retrieve the most recent poses from the Robotarium.  The time delay is
     % approximately 0.033 seconds
     x = r.get_poses();

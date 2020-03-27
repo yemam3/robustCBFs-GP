@@ -108,13 +108,13 @@ classdef DisturbanceEstimator
             x_dot                           = obj.data(:,obj.n+1:2*obj.n);
             u                               = obj.data(:,2*obj.n+1:end);
             % g(x)_11
-            y_11                            = x_dot(:,1) ./ u(:,1);
+            y_11                            = x_dot(:,1) ./ u(:,1) - cos(x(:,3));
             obj.gpr_models{1,1}             = fitrgp(x, y_11); 
             % g(x)_21
-            y_21                            = x_dot(:,2) ./ u(:,1);
+            y_21                            = x_dot(:,2) ./ u(:,1) - sin(x(:,3));
             obj.gpr_models{2,1}             = fitrgp(x, y_21); 
             % g(x)_32
-            y_32                            = x_dot(:,3) ./ u(:,2);
+            y_32                            = x_dot(:,3) ./ u(:,2) - 1;
             obj.gpr_models{3,2}             = fitrgp(x, y_32); 
             % Recompute Uncertainty Grid Based on  
             obj = update_heat_map(obj);
