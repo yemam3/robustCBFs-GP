@@ -5,7 +5,7 @@
 rng()
 close all; clear all; clc;
 %% Get Robotarium object used to communicate with the robots/simulator
-N = 1;
+N = 5;
 r = Robotarium('NumberOfRobots', N, 'ShowFigure', true);
 % Intialize Controllers and Safety Functions
 uni_barrier_certificate = create_uni_barrier_certificate_with_boundary();
@@ -37,7 +37,7 @@ for t = 1:iterations
     % Collision Avoidance
     dxu = uni_barrier_certificate(dxu, x, []); 
     % Save data
-    if t > 1
+    if mod(t,40) == 0
         disturb_estimator = disturb_estimator.append_traj_data(x, dxu, x_old, dxu_old);
     end
 

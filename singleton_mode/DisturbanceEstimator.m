@@ -39,20 +39,7 @@ classdef DisturbanceEstimator
             obj.max_sigmas          = [];
             obj.num_new_data        = 0;
             % Intiailize Coordinates for uncertainty grid
-            xs                      = obj.bds(1):obj.granul_htmp:obj.bds(2); 
-            ys                      = obj.bds(3):obj.granul_htmp:obj.bds(4);
-            [xs, ys]                = meshgrid(xs,ys);
-            xs                      = reshape(xs, [numel(xs), 1]);
-            ys                      = reshape(ys, [numel(ys), 1]);
-            thetas                  = 2 * pi * (rand(numel(xs), 1) - 0.5);
-            sigmas                  = ones(numel(xs), 1) * 1000;
-            obj.uncertainty_grid    = [xs, ys, thetas, sigmas]; 
-            % Shape of uncertainty grid:
-            % [x_1,y_1,theta_1, sigma_1
-            %  x_2,y_2,theta_2, sigma_2  
-            %        ....              ]  
-            % where x_i, y_i, theta_i is the state, and sigma is the
-            % uncertainty at that corresponding point.
+            obj.uncertainty_grid = build_uncertainty_grid(obj.bds,obj.granul_htmp);
         end
         
         function obj = waypoint_step(obj, x)
@@ -127,20 +114,22 @@ classdef DisturbanceEstimator
         end
         
         function obj = append_traj_data(obj, x, dxu, x_old, dxu_old)
-            
-            if size(obj.data,1) < 100
-                ids = 1:obj.N;
-            else
-                ids = find(sum((x(1:2,:) - obj.waypoints(1:2,:)).^2, 1) < 0.05);
-            end
-            
-            x_dot = x(:,ids) - x_old(:,ids);
-            x_dot(3,:) = atan2(sin(x_dot(3,:)), cos(x_dot(3,:)));
-            x_dot = x_dot / obj.dt;
-            u     = dxu_old(:,ids);
-            new_data = [x_old(:,ids); x_dot; u]'; % new data shape: x x_dot u
-            new_data(any(abs(u) < 0.001, 1)',:) = []; % Prune data with 0 u
-            obj.data(end+1:end+size(new_data,1),:) = new_data;
+%             if size(obj.data,1) < 100
+%                 ids = 1:obj.N;
+%             else
+%                 ids = find(sum((x(1:2,:) - obj.waypoints(1:2,:)).^2, 1) < 0.05);
+%             end
+            ids                                     = 1:obj.N;                      % Going to always collect data instead 
+            x_dot                                   = x(:,ids) - x_old(:,ids);
+            x_dot(3,:)                              = atan2(sin(x_dot(3,:)), cos(x_dot(3,:)));
+            x_dot                                   = x_dot / obj.dt;
+            u                                       = dxu_old(:,ids);
+            new_data                                = [x_old(:,ids); x_dot; u]';    % new data shape: x x_dot u
+            % Plot New Data 
+            hold on
+            plot(x_old(1,ids), x_old(2,ids), 'bo', 'MarkerSize', 20);
+            new_data(any(abs(u) < 0.001, 1)',:)     = [];                           % Prune data with 0 u
+            obj.data(end+1:end+size(new_data,1),:)  = new_data;
             obj.num_new_data = obj.num_new_data + size(new_data,1);
         end
         
