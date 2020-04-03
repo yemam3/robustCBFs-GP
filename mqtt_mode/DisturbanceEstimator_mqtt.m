@@ -19,6 +19,9 @@ classdef DisturbanceEstimator_mqtt
         gpr_models                                                      % cell(n x m)
         uncertainty_grid                                                % meshgrid size(-1,obj.n+1)        
         num_new_data                                                    % number of new data points acquired
+        % For Data Saving Purposes
+        all_sigmas
+        all_mus
     end
     
     methods
@@ -34,10 +37,11 @@ classdef DisturbanceEstimator_mqtt
             obj.n                   = n;
             obj.m                   = m;
             obj.data                = zeros([0,2*obj.n+obj.m]);
-            obj.uncertainty_grid    = [];                               % Initialize Big 
             obj.num_new_data        = 0;
             % Intiailize Uncertainty Grid
-            obj.uncertainty_grid = build_uncertainty_grid(obj.bds,obj.granul_htmp);
+            obj.uncertainty_grid    = build_uncertainty_grid(obj.bds,obj.granul_htmp);
+            obj.all_mus             = zeros([size(obj.uncertainty_grid,1),obj.n*obj.m,0]);
+            obj.all_sigmas          = zeros([size(obj.uncertainty_grid,1),obj.n*obj.m,0]);
         end
         
         function obj = main(obj)
@@ -101,8 +105,11 @@ classdef DisturbanceEstimator_mqtt
             % Uses the predict function to get the uncertainty for the each
             % point in the uncertainty grid (state space mesh).
   
-            [~, sigmas]                 = predict(obj, obj.uncertainty_grid(:,1:obj.n));
+            [mus, sigmas]               = predict(obj, obj.uncertainty_grid(:,1:obj.n));
             obj.uncertainty_grid(:,4)   = sum(sigmas,2);
+            obj.all_mus(:,:,end+1)      = mus;
+            obj.all_sigmas(:,:,end+1)   = sigmas; 
+            
             % Upon Updating the Sigmas for the heatmap publish those Sigmas
             obj.mqtt_interface.send_json(obj.pub_topic, obj.uncertainty_grid(:,4));
         end
@@ -133,8 +140,36 @@ classdef DisturbanceEstimator_mqtt
                     end
                 end
             end
-            
+        end  
+                    
+        function plot_sigmas(obj)
+            % Add Colors so that they're constant through different plots
+            colors = ['b','g','r','c','m','y','k','w']; % TODO: Add Colors 
+            if length(size(obj.all_sigmas)) ~= 3
+                return
+            end
+            size(obj.all_sigmas)
+            figure(1000)
+            hold on; grid on;
+            ax = gca;
+            ax.FontSize = 20;
+            ylabel('$\sum\limits_{i,j}^{}\sigma_{i,j}$','Interpreter','latex','FontSize', 30);
+            xlabel('iteration','Interpreter','latex','FontSize', 30);
+            max_sigmas = squeeze(max(obj.all_sigmas, [], 1));
+            size(max_sigmas)
+            lgd_entries = cell([1,obj.n*obj.m]);
+            for i = 1:obj.n
+                for j = 1:obj.m
+                    disp((j-1)*obj.n+i)
+                    plot(max_sigmas((j-1)*obj.n+i,:), colors((j-1)*obj.n+i), 'LineWidth', 5);
+                    lgd_entries{(j-1)*obj.n+i} = ['$\sigma_{',num2str(i),num2str(j),'}$'];
+                end
+            end
+            legend(lgd_entries, 'Interpreter','latex','FontSize',20,'Location','northeast');
+            hold off;
         end
+            
+        
     end
 end
 

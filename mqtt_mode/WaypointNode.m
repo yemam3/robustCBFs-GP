@@ -122,11 +122,6 @@ classdef WaypointNode
                obj.waypoint_queue(all(obj.waypoint_queue(:,1:3) == obj.waypoints(:,i)',2),:) = [];
             end
         end
-        
-        function plot_max_sigmas(obj)
-            figure(1000)
-            plot(obj.max_sigmas, 'LineWidth', 5);
-        end
      
     end
 end

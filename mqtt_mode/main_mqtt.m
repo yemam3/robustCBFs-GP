@@ -4,7 +4,8 @@
 % Main Robotarium Script.
 
 init; init_mqtt; date_string = datestr(datetime('now'),'HH:MM:SS.FFF'); rng(); 
-
+% Suppress is not serializable warning (caused when saving data)
+warning('off', 'MATLAB:Java:ConvertFromOpaque');
 %% Get Robotarium object used to communicate with the robots/simulator
 N                       = 3; % Number of Robots
 n                       = 3; % Dimension of state x_i 
@@ -54,6 +55,5 @@ for t = 1:iterations
     u_data          = cat(3,u_data, dxu);
 end
 
-waypoint_node.plot_max_sigmas();
 % We should call r.call_at_scripts_end() after our experiment is over!
 r.debug();
