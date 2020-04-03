@@ -1,4 +1,4 @@
-function uncertainty_grid = build_uncertainty_grid(bds,granul_htmp,varargin)
+function uncertainty_grid = build_uncertainty_grid(bds, varargin)
 %UNTITLED10 Summary of this function goes here
 %   Detailed explanation goes here
 % Shape of uncertainty grid:
@@ -8,12 +8,14 @@ function uncertainty_grid = build_uncertainty_grid(bds,granul_htmp,varargin)
 % where x_i, y_i, theta_i is the state, and sigma is the
 % uncertainty at that corresponding point.
     
-    if nargin >= 3
-        init_sigma           = argin(3);
-    else
-        init_sigma          = 1000;
-    end
-    
+    % Parse Arguments
+    p = inputParser;
+    addOptional(p, 'InitSigma', 1000);
+    addOptional(p, 'GranulHtmp', 0.25);
+    parse(p, varargin{:});
+    granul_htmp             = p.Results.GranulHtmp;
+    init_sigma              = p.Results.InitSigma;
+    % Generate Uncertainty Grid / Heatmap
     xs                      = bds(1):granul_htmp:bds(2);
     ys                      = bds(3):granul_htmp:bds(4);
     [xs, ys]                = meshgrid(xs,ys);

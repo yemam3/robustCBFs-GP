@@ -1,2 +1,4 @@
 *.DS_Store
+saved_robotarium_data/*
+saved_data/*
 *~

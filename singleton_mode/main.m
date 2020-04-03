@@ -9,7 +9,7 @@ N = 5;
 r = Robotarium('NumberOfRobots', N, 'ShowFigure', true);
 % Intialize Controllers and Safety Functions
 uni_barrier_certificate = create_uni_barrier_certificate_with_boundary();
-si_position_controller = create_si_position_controller_v2();
+si_position_controller  = create_minnorm_waypoint_controller();
 
 % Disturbance Estimator
 disturb_estimator = DisturbanceEstimator(N,3,2);

@@ -9,7 +9,7 @@ classdef WaypointNode
         sub_topic           = 'sigmas';
         bds                 = [-1.4, 1.4, -0.8, 0.8]; 
         dt                  = 0.033;            % Robotarium Timestep
-        granul_htmp         = 0.20;             % granularity of heatmap
+        granul_htmp         = 0.25;             % granularity of heatmap
     end
     properties
         mqtt_interface
@@ -30,7 +30,7 @@ classdef WaypointNode
             % Setup MQTT Node
             % Robotarium: mqttInterface = MqttInterface('matlab_node', '192.168.1.8', 1884); 
             % Localhost:  mqttInterface = MqttInterface('matlab_node', 'localhost', 1883); 
-            obj.mqtt_interface       = MqttInterface('waypoint_node', '192.168.1.8', 1884, 1);
+            obj.mqtt_interface       = MqttInterface('waypoint_node', 'localhost', 1883, 1);
             obj.mqtt_interface.subscribe(obj.sub_topic);
             obj.N                   = N;  
             obj.n                   = n;
@@ -38,9 +38,10 @@ classdef WaypointNode
             obj.waypoints           = [];
             obj.waypoint_queue      = [];
             obj.data                = zeros([0,2*obj.n+obj.m]);
-            % Intiailize Coordinates for uncertainty grid
-            obj.uncertainty_grid    = build_uncertainty_grid(obj.bds,obj.granul_htmp);
+            % For Saving Purposes 
             obj.all_sigmas          = [];
+            % Intiailize Coordinates for uncertainty grid
+            obj.uncertainty_grid    = build_uncertainty_grid(obj.bds,obj.granul_htmp);    
         end
         
         function obj = waypoint_step(obj, x)
@@ -53,7 +54,10 @@ classdef WaypointNode
             if isempty(obj.waypoints)
                 ids                 = 1:obj.N;
             else
-                ids                 = find(sum((x(1:2,:) - obj.waypoints(1:2,:)).^2, 1) < 0.05);
+                ids1                = sum((x(1:2,:) - obj.waypoints(1:2,:)).^2, 1) < 0.15;
+                theta_diff          = (x(3,:) - obj.waypoints(3,:));
+                ids2                = abs(atan2(sin(theta_diff), cos(theta_diff))) < pi/6;
+                ids                 = find(ids1 & ids2);
             end
             obj.waypoints(:,ids)    = obj.gen_next_waypoint(x, ids);
         end
@@ -88,7 +92,7 @@ classdef WaypointNode
             ids                                     = 1:obj.N;                      % Going to always collect data instead 
             x_dot                                   = x(:,ids) - x_old(:,ids);
             x_dot(3,:)                              = atan2(sin(x_dot(3,:)), cos(x_dot(3,:)));
-            x_dot                                   = x_dot / obj.dt + normrnd(0,0.00); % Add Fake Noise Here
+            x_dot                                   = x_dot / obj.dt * 1.1;%+ normrnd(0,1.00); % Add Fake Noise Here
             u                                       = dxu_old(:,ids);
             new_data                                = [x_old(:,ids); x_dot; u]';    % new data shape: x x_dot u
             new_data(any(abs(u) < 0.001, 1)',:)     = [];                           % Prune data with 0 u
