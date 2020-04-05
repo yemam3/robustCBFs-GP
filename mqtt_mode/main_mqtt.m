@@ -3,7 +3,11 @@
 % 21/03/2020
 % Main Robotarium Script.
 
-init; init_mqtt; date_string = datestr(datetime('now'),'HH:MM:SS.FFF'); rng(); 
+
+% Init Files that add requirements to path
+init;  init_mqtt;
+% For Data Saving Purposes
+date_string = datestr(datetime('now'),'HH:MM:SS.FFF'); rng(); 
 % Suppress is not serializable warning (caused when saving data)
 warning('off', 'MATLAB:Java:ConvertFromOpaque');
 %% Get Robotarium object used to communicate with the robots/simulator
