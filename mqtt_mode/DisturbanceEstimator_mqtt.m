@@ -69,7 +69,7 @@ classdef DisturbanceEstimator_mqtt
             % Output:
             %   obj.grp_models cell(N,M)
             %   
-            
+            fprintf('Fitting New Models!!!!!\n');
             if isempty(obj.data) || obj.num_new_data < obj.threshold_data_num
                 return
             end

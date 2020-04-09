@@ -19,9 +19,9 @@ classdef WaypointNode
         waypoints                                           % Current waypoints of the robots 
         waypoint_queue                                      % Queue of waypoints the robots should go to (always index first obj.n columns)
         data                                                % 3 x num_data_points (variable)
-        uncertainty_grid
+        uncertainty_grid                                    
         max_sigmas                                          % Record all the max sigmas to plot over time
-        all_sigmas
+        all_sigmas                                          % Record all sigmas every time we predict the meshgrid
     end
     
     methods

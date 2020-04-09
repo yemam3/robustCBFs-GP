@@ -10,7 +10,7 @@ function uncertainty_grid = build_uncertainty_grid(bds, varargin)
     
     % Parse Arguments
     p = inputParser;
-    addOptional(p, 'InitSigma', 1000);
+    addOptional(p, 'InitSigma', 50);
     addOptional(p, 'GranulHtmp', 0.25);
     parse(p, varargin{:});
     granul_htmp             = p.Results.GranulHtmp;
@@ -22,7 +22,7 @@ function uncertainty_grid = build_uncertainty_grid(bds, varargin)
     xs                      = reshape(xs, [numel(xs), 1]);
     ys                      = reshape(ys, [numel(ys), 1]);
     thetas                  = 2 * pi * (rand(numel(xs), 1) - 0.5);
-    sigmas                  = ones(numel(xs), 1) * init_sigma;
+    sigmas                  = ones(numel(xs), 1) * init_sigma + rand(numel(xs), 1) * 10;
     uncertainty_grid        = [xs, ys, thetas, sigmas]; 
 end
 
