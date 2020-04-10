@@ -37,24 +37,26 @@ function [ uni_barrier_certificate ] = create_uni_barrier_certificate_with_bound
     addOptional(parser, 'WheelVelocityLimit', 12.5);
     addOptional(parser, 'BaseLength', 0.105);
     addOptional(parser, 'WheelRadius', 0.016);
-    addOptional(parser, 'MaxNumRobots', 30);
+    addOptional(parser, 'MaxNumRobots', 10);
     addOptional(parser, 'MaxObstacles', 50);
     addOptional(parser, 'MaxNumBoundaryPoints', 4);
     addOptional(parser, 'BoundaryPoints', [-1.6 1.6 -1.0 1.0]);
+    addOptional(parser, 'MaxDisturbance', 0.01);
     parse(parser, varargin{:})  
     
     opts = optimoptions(@quadprog,'Display', 'off', 'TolFun', 1e-5, 'TolCon', 1e-4);       
-    gamma = parser.Results.BarrierGain;
-    safety_radius = parser.Results.SafetyRadius;
+    gamma               = parser.Results.BarrierGain;
+    safety_radius       = parser.Results.SafetyRadius;
     projection_distance = parser.Results.ProjectionDistance;
-    wheel_vel_limit = parser.Results.WheelVelocityLimit;
-    wheel_radius = parser.Results.WheelRadius;
-    base_length = parser.Results.BaseLength;
-    max_num_robots = parser.Results.MaxNumRobots;
-    max_num_boundaries = parser.Results.MaxNumBoundaryPoints;
-    max_num_obstacles = parser.Results.MaxObstacles;
-    boundary_points = parser.Results.BoundaryPoints;
-    
+    wheel_vel_limit     = parser.Results.WheelVelocityLimit;
+    wheel_radius        = parser.Results.WheelRadius;
+    base_length         = parser.Results.BaseLength;
+    max_num_robots      = parser.Results.MaxNumRobots;
+    max_num_boundaries  = parser.Results.MaxNumBoundaryPoints;
+    max_num_obstacles   = parser.Results.MaxObstacles;
+    boundary_points     = parser.Results.BoundaryPoints;
+    max_disturb         = parser.Results.MaxDisturbance;
+
     %Check given boundary points
     assert(length(boundary_points)==4, "Boundary points must represent a rectangle.")
     assert(boundary_points(2) > boundary_points(1), "Difference between x coordinates of defined rectangular boundary points must be positive.")
@@ -62,7 +64,7 @@ function [ uni_barrier_certificate ] = create_uni_barrier_certificate_with_bound
     
     D = [wheel_radius/2, wheel_radius/2; -wheel_radius/base_length, wheel_radius/base_length];
     L = [1,0;0,projection_distance];
-
+    
     
     max_num_constraints = nchoosek(max_num_robots, 2) + max_num_robots*max_num_boundaries + max_num_robots*max_num_obstacles; %+ max_num_robots;
     A = zeros(max_num_constraints, 2*max_num_robots);
@@ -90,6 +92,11 @@ function [ uni_barrier_certificate ] = create_uni_barrier_certificate_with_bound
         %       A 2xN matrix of safe unicycle control inputs
         %
         %   BARRIER_UNICYCLE(dxu, x)
+        
+        % Bound The Disturbance just in case we're fed non-sense
+        
+        psi_1(abs(psi_1) > max_disturb) = sign(psi_1(abs(psi_1) > max_disturb)) * max_disturb;
+        psi_2(abs(psi_2) > max_disturb) = sign(psi_2(abs(psi_2) > max_disturb)) * max_disturb;
         
         if nargin < 3
             obstacles = [];
@@ -183,28 +190,24 @@ function [ uni_barrier_certificate ] = create_uni_barrier_certificate_with_bound
                 end
             end
         end
-        % TODO: Add obstacles!
-%         if ~isempty(obstacles)
-%             % Do obstacles
-%             for i = 1:num_robots            
-%                 diffs = (ps(:, i) - obstacles)';
-%                 h = sum(diffs.^2, 2) - safety_radius^2;
-%                 h_dot_i = 2*diffs*Ms(:,2*i-1:2*i);
-%                 A(count:count+num_obstacles-1,(2*i-1):(2*i)) = h_dot_i;
-%                 b(count:count+num_obstacles-1) = -gamma*h.^3;               
-%                 count = count + num_obstacles;
-%             end
-%         end
-        %##############
-        Os(1,1:num_robots) = cos(x(3, :)); 
-        Os(2,1:num_robots) = sin(x(3, :));
-        ps(:,1:num_robots) = x(1:2, :) + projection_distance*Os(:,1:num_robots);
+        
         Ms(1,1:2:2*num_robots) = Os(1,1:num_robots);
         Ms(1,2:2:2*num_robots) = -projection_distance*Os(2,1:num_robots);
         Ms(2,2:2:2*num_robots) = projection_distance*Os(1,1:num_robots);
         Ms(2,1:2:2*num_robots) = Os(2,1:num_robots);
-        %##############
-        % TODO: Add boundaries
+        
+        if ~isempty(obstacles)
+            % Do obstacles
+            for i = 1:num_robots            
+                diffs = (ps(:, i) - obstacles)';
+                h = sum(diffs.^2, 2) - safety_radius^2;
+                h_dot_i = 2*diffs*Ms(:,2*i-1:2*i)*D;
+                A(count:count+num_obstacles-1,(2*i-1):(2*i)) = h_dot_i;
+                b(count:count+num_obstacles-1) = -gamma*h.^3;               
+                count = count + num_obstacles;
+            end
+        end
+        
         for i = 1:num_robots
             %Pos Y
             A(count,(2*i-1):(2*i)) =  -Ms(2,(2*i-1):(2*i)) * D;
@@ -228,13 +231,9 @@ function [ uni_barrier_certificate ] = create_uni_barrier_certificate_with_bound
         end
         
         %Solve QP program generated earlier
-        L_all = [];
-        for i = 1:num_robots
-            L_all = blkdiag(L_all, (Ls_2(:,2*i-1:2*i) + Ls_1(:,2*i-1:2*i))/2 * D);
-        end
         dxu = D \ dxu;
         vhat = reshape(dxu,2*num_robots,1);
-        
+        L_all = kron(eye(num_robots), L*D);
         H = 2*(L_all')*L_all;
         f = -2*vhat'*(L_all')*L_all;
         vnew = quadprog(H, double(f), -A(1:num_constraints,1:2*num_robots), -b(1:num_constraints), [], [], -wheel_vel_limit*ones(2*num_robots,1), wheel_vel_limit*ones(2*num_robots,1), [], opts);

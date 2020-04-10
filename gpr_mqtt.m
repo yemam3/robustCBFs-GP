@@ -13,9 +13,6 @@ while true
     end
     t = t + 1;
     pause(0.1)
-    if mod(t,10) == 1
-        disturb_estimator.plot_sigmas();
-    end
 end
 
 
