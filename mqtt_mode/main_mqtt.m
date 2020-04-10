@@ -12,7 +12,7 @@ date_string = datestr(datetime('now'),'HH:MM:SS.FFF'); rng();
 % Suppress is not serializable warning (caused when saving data)
 warning('off', 'MATLAB:Java:ConvertFromOpaque');
 %% Get Robotarium object used to communicate with the robots/simulator
-N                       = 5; % Number of Robots
+N                       = 3; % Number of Robots
 n                       = 3; % Dimension of state x_i 
 m                       = 2; % Dimension of control u_i
 r                       = Robotarium('NumberOfRobots', N, 'ShowFigure', true);
@@ -20,7 +20,7 @@ r                       = Robotarium('NumberOfRobots', N, 'ShowFigure', true);
 uni_barrier_certificate = create_uni_barrier_certificate_with_boundary_v2();
 si_position_controller  = create_minnorm_waypoint_controller();
 % Select the number of iterations for the experiment.  
-iterations              = 10000/2;
+iterations              = 10000;
 % Disturbance Estimator
 waypoint_node           = WaypointNode(N,n,m);
 x_old                   = []; 

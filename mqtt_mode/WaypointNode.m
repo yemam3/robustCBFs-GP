@@ -33,7 +33,7 @@ classdef WaypointNode
             % Setup MQTT Node
             % Robotarium: mqttInterface = MqttInterface('matlab_node', '192.168.1.8', 1884); 
             % Localhost:  mqttInterface = MqttInterface('matlab_node', 'localhost', 1883); 
-            obj.mqtt_interface       = MqttInterface('waypoint_node', 'localhost', 1883, 1);
+            obj.mqtt_interface       = MqttInterface('waypoint_node', '192.168.1.8', 1884, 1);
             obj.mqtt_interface.subscribe(obj.sub_topic);
             obj.N                   = N;        
             obj.n                   = n;         
@@ -122,7 +122,7 @@ classdef WaypointNode
             x_dot                                   = x_dot / obj.dt;                   % Add Fake Noise Here
             u                                       = dxu_old(:,ids);
             new_data                                = [x_old(:,ids); x_dot; u]';        % new data shape: x x_dot u
-            new_data(any(abs(u) < 0.001, 1)',:)     = [];                               % Prune data with 0 u
+            new_data(any(abs(u) < 0.03, 1)',:)     = [];                               % Prune data with 0 u
             obj.data(end+1:end+size(new_data,1),:)  = new_data;
             % Send then Clear Newly Collected Data Points 
             if size(obj.data,1) > 10

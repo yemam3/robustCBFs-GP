@@ -3,7 +3,7 @@ init; init_mqtt; date_string = datestr(datetime('now'),'HH:MM:SS.FFF');
 warning('off', 'MATLAB:Java:ConvertFromOpaque');
 
 IS_SIM = 0;
-n = 3; m = 2; N = 5;
+n = 3; m = 2; N = 3;
 disturb_estimator = DisturbanceEstimator_mqtt(N, n, m, IS_SIM);
 t = 1;
 while true 

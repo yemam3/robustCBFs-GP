@@ -31,7 +31,7 @@ function [ uni_barrier_certificate ] = create_uni_barrier_certificate_with_bound
 %       size of the robots. 
 
     parser = inputParser;
-    addOptional(parser, 'BarrierGain', 150);
+    addOptional(parser, 'BarrierGain', 15000);
     addOptional(parser, 'SafetyRadius', 0.12);
     addOptional(parser, 'ProjectionDistance', 0.03);
     addOptional(parser, 'WheelVelocityLimit', 12.5);
@@ -41,7 +41,7 @@ function [ uni_barrier_certificate ] = create_uni_barrier_certificate_with_bound
     addOptional(parser, 'MaxObstacles', 50);
     addOptional(parser, 'MaxNumBoundaryPoints', 4);
     addOptional(parser, 'BoundaryPoints', [-1.6 1.6 -1.0 1.0]);
-    addOptional(parser, 'MaxDisturbance', 0.01);
+    addOptional(parser, 'MaxDisturbance', 1);
     parse(parser, varargin{:})  
     
     opts = optimoptions(@quadprog,'Display', 'off', 'TolFun', 1e-5, 'TolCon', 1e-4);       

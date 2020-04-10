@@ -16,11 +16,11 @@ function [ automatic_parking_controller ] = create_minnorm_waypoint_controller(v
 
     p = inputParser;
     addOptional(p, 'LinearVelocityGain', 0.8);
-    addOptional(p, 'AngularVelocityLimit', pi);
+    addOptional(p, 'AngularVelocityLimit', pi/2);
     addOptional(p, 'PositionError', 0.03);
     addOptional(p, 'PositionEpsilon', 0.01)
     addOptional(p, 'RotationError', 0.05);
-    addOptional(p, 'VelocityMagnitudeLimit', 0.20)
+    addOptional(p, 'VelocityMagnitudeLimit', 0.15)
     parse(p, varargin{:});
     
     lin_vel_gain = p.Results.LinearVelocityGain; 

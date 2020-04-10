@@ -31,7 +31,7 @@ classdef DisturbanceEstimator_mqtt
             % Setup MQTT Node
             % Robotarium: mqttInterface = MqttInterface('matlab_node', '192.168.1.8', 1884); 
             % Localhost:  mqttInterface = MqttInterface('matlab_node', 'localhost', 1883); 
-            obj.mqtt_interface      = MqttInterface('gp_node', 'localhost', 1883, 1);
+            obj.mqtt_interface      = MqttInterface('gp_node', '192.168.1.8', 1884, 1);
             obj.mqtt_interface.subscribe(obj.sub_topic);
             obj.N                   = N;  
             obj.n                   = n;
