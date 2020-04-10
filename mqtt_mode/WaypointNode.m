@@ -33,7 +33,7 @@ classdef WaypointNode
             % Setup MQTT Node
             % Robotarium: mqttInterface = MqttInterface('matlab_node', '192.168.1.8', 1884); 
             % Localhost:  mqttInterface = MqttInterface('matlab_node', 'localhost', 1883); 
-            obj.mqtt_interface       = MqttInterface('waypoint_node', '192.168.1.8', 1884, 1);
+            obj.mqtt_interface       = MqttInterface('waypoint_node', 'localhost', 1883, 1);
             obj.mqtt_interface.subscribe(obj.sub_topic);
             obj.N                   = N;        
             obj.n                   = n;         
@@ -127,7 +127,9 @@ classdef WaypointNode
             % Send then Clear Newly Collected Data Points 
             if size(obj.data,1) > 10
                 fprintf('Sending data...\n')
-                obj.mqtt_interface.send_json(obj.pub_topic, obj.data);
+                %obj.mqtt_interface.send_json(obj.pub_topic, obj.data);
+                temp = obj.data;
+                save('data.mat','temp');
                 obj.clear_traj_data();       
             end
         end
@@ -135,7 +137,14 @@ classdef WaypointNode
         function obj = update_models(obj)
             %UPDATE_MODELS updates GP models.
             
-            models = obj.mqtt_interface.receive_bytes(obj.sub_topic); % gp models cell shape [obj.n,obj.m]
+            %[models, err, err_flag] = obj.mqtt_interface.receive_bytes(obj.sub_topic); % gp models cell shape [obj.n,obj.m]
+            try 
+                models = load('models.mat');
+                models = models.temp;
+            catch e
+                e
+                models = [];
+            end
             % If no data is received then there is nothing to update
             if isempty(models) 
                return 

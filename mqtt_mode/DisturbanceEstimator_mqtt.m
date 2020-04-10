@@ -31,7 +31,7 @@ classdef DisturbanceEstimator_mqtt
             % Setup MQTT Node
             % Robotarium: mqttInterface = MqttInterface('matlab_node', '192.168.1.8', 1884); 
             % Localhost:  mqttInterface = MqttInterface('matlab_node', 'localhost', 1883); 
-            obj.mqtt_interface      = MqttInterface('gp_node', '192.168.1.8', 1884, 1);
+            obj.mqtt_interface      = MqttInterface('gp_node', 'localhost', 1883, 1);
             obj.mqtt_interface.subscribe(obj.sub_topic);
             obj.N                   = N;  
             obj.n                   = n;
@@ -63,10 +63,11 @@ classdef DisturbanceEstimator_mqtt
             % Output:
             %   obj.grp_models cell(N,M)
             %   
-            fprintf('Fitting New Models!!!!!\n');
+            
             if isempty(obj.data) || obj.num_new_data < obj.threshold_data_num
                 return
             end
+            fprintf('Fitting New Models!!!!!\n');
             obj.gpr_models                  = cell(obj.n, obj.m);
             x                               = obj.data(:,1:obj.n);
             x_dot                           = obj.data(:,obj.n+1:2*obj.n);
@@ -87,7 +88,9 @@ classdef DisturbanceEstimator_mqtt
             % Reset Count of New Data 
             obj.num_new_data = 0;
             % Upong Updating the GP Models Sent Them over MQTT
-            obj.mqtt_interface.send_bytes(obj.pub_topic, obj.gpr_models);
+            %obj.mqtt_interface.send_bytes(obj.pub_topic, obj.gpr_models);
+            temp = obj.gpr_models;
+            save('models.mat', 'temp');
         end
         
         function obj = clear_traj_data(obj)
@@ -98,7 +101,15 @@ classdef DisturbanceEstimator_mqtt
             %APPEND_TRAJ_DATA appends trajectory data obtained through mqtt
             
             % Get New Data from MQTT under topic: obj.sub_topic
-            new_data = obj.mqtt_interface.receive_json(obj.sub_topic); % new data shape (size(uncertainty_grid,1),2n+m): [x_i, x_dot_i, u_i]
+            %new_data = obj.mqtt_interface.receive_json(obj.sub_topic); % new data shape (size(uncertainty_grid,1),2n+m): [x_i, x_dot_i, u_i]
+            try 
+                new_data = load('data.mat');
+                new_data = new_data.temp;
+            catch e
+                e
+                new_data = [];
+            end
+            % new_data = load('data.mat');
             if ~isempty(new_data)
                 fprintf('Received new data!\n')
             end
@@ -107,7 +118,6 @@ classdef DisturbanceEstimator_mqtt
             obj.fake_noise = cat(1, obj.fake_noise, normrnd(0,0.05*obj.is_sim,[size(new_data,1),obj.n*obj.m]));
             obj.num_new_data = obj.num_new_data + size(new_data,1);    % count how much new data we've gathered so far
         end
-        
     end
 end
 

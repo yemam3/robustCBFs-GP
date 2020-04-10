@@ -237,9 +237,14 @@ function [ uni_barrier_certificate ] = create_uni_barrier_certificate_with_bound
         H = 2*(L_all')*L_all;
         f = -2*vhat'*(L_all')*L_all;
         vnew = quadprog(H, double(f), -A(1:num_constraints,1:2*num_robots), -b(1:num_constraints), [], [], -wheel_vel_limit*ones(2*num_robots,1), wheel_vel_limit*ones(2*num_robots,1), [], opts);
-        %Set robot velocities to new velocities
-        dxu = reshape(vnew, 2, num_robots);
-        dxu = D * dxu;
+        if isempty(vnew)
+            dxu = zeros(2, num_robots);
+            warning('No Solution for Barriers!')
+        else
+            %Set robot velocities to new velocities
+            dxu = reshape(vnew, 2, num_robots);
+            dxu = D * dxu;
+        end
     end
 end
 
