@@ -1,28 +1,18 @@
-%% Disturbance Estimation of GritsBot-X on the Robotarium (Main Script)
+%% Disturbance Estimation for GritsBot-Xs on the Robotarium Node (Main Script)
 % Yousef Emam
 % 21/03/2020
 % Main Robotarium Script.
 
+% Initialization File
+init;  
 
-% Init Files that add requirements to path
-%init;  
-init_mqtt;
-% For Data Saving Purposes
-date_string = datestr(datetime('now'),'HH:MM:SS.FFF'); rng(); 
-% Suppress is not serializable warning (caused when saving data)
-warning('off', 'MATLAB:Java:ConvertFromOpaque');
 %% Get Robotarium object used to communicate with the robots/simulator
-N                       = 5; % Number of Robots
-n                       = 3; % Dimension of state x_i 
-m                       = 2; % Dimension of control u_i
 r                       = Robotarium('NumberOfRobots', N, 'ShowFigure', true);
 % Intialize Controllers and Safety Functions
 uni_barrier_certificate = create_uni_barrier_certificate_with_boundary_v2();
 si_position_controller  = create_minnorm_waypoint_controller();
-% Select the number of iterations for the experiment.  
-iterations              = 10000/2;
 % Disturbance Estimator
-waypoint_node           = WaypointNode(N,n,m);
+waypoint_node           = WaypointNode(N,n,m,COMM_MODE,IP,PORT);
 x_old                   = []; 
 x_data                  = zeros(3,N,0); 
 u_data                  = zeros(2,N,0);
@@ -72,6 +62,7 @@ for t = 1:iterations
 end
 
 waypoint_node.plot_sigmas();
+waypoint_node.clean_up();
 % We should call r.call_at_scripts_end() after our experiment is over!
 r.debug();
 save(['saved_data/main_mqtt_workspace_', date_string,'.mat'], 'waypoint_node', 'x_data', 'u_data');

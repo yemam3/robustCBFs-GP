@@ -12,6 +12,7 @@ classdef WaypointNode
         granul_htmp         = 0.25;                         % granularity of heatmap
     end
     properties
+        comm_mode                                           % Options are 'MQTT', SharedFiles'
         mqtt_interface                                      % MQTT Interface
         N                                                   % Number of Robots
         n                                                   % Dimension of State
@@ -27,14 +28,19 @@ classdef WaypointNode
     end
     
     methods
-        function obj = WaypointNode(N, n, m)
+        function obj = WaypointNode(N, n, m, comm_mode, ip, port)
             %WAYPOINTNODE Constructor of the class an instance of this class
             
+            obj.comm_mode           = comm_mode;
+              
             % Setup MQTT Node
-            % Robotarium: mqttInterface = MqttInterface('matlab_node', '192.168.1.8', 1884); 
-            % Localhost:  mqttInterface = MqttInterface('matlab_node', 'localhost', 1883); 
-            obj.mqtt_interface       = MqttInterface('waypoint_node', 'localhost', 1883, 1);
-            obj.mqtt_interface.subscribe(obj.sub_topic);
+            if strcmp(comm_mode, 'MQTT')
+                obj.mqtt_interface      = MqttInterface('waypoint_node', ip, port, 1);
+                obj.mqtt_interface.subscribe(obj.sub_topic);
+            else
+                obj.mqtt_interface      = [];
+            end
+
             obj.N                   = N;        
             obj.n                   = n;         
             obj.m                   = m;         
@@ -122,14 +128,20 @@ classdef WaypointNode
             x_dot                                   = x_dot / obj.dt;                   % Add Fake Noise Here
             u                                       = dxu_old(:,ids);
             new_data                                = [x_old(:,ids); x_dot; u]';        % new data shape: x x_dot u
-            new_data(any(abs(u) < 0.001, 1)',:)     = [];                               % Prune data with 0 u
+            new_data(any(abs(u) < 0.003, 1)',:)     = [];                               % Prune data with 0 u
             obj.data(end+1:end+size(new_data,1),:)  = new_data;
+            
             % Send then Clear Newly Collected Data Points 
             if size(obj.data,1) > 10
                 fprintf('Sending data...\n')
-                %obj.mqtt_interface.send_json(obj.pub_topic, obj.data);
-                temp = obj.data;
-                save('data.mat','temp');
+                if strcmp(obj.comm_mode, 'MQTT')
+                % Send over MQTT
+                    obj.mqtt_interface.send_json(obj.pub_topic, obj.data);
+                elseif strcmp(obj.comm_mode, 'FileSharing')
+                % Save in a File
+                    temp = obj.data;
+                    save('data.mat','temp');
+                end
                 obj.clear_traj_data();       
             end
         end
@@ -137,20 +149,28 @@ classdef WaypointNode
         function obj = update_models(obj)
             %UPDATE_MODELS updates GP models.
             
-            %[models, err, err_flag] = obj.mqtt_interface.receive_bytes(obj.sub_topic); % gp models cell shape [obj.n,obj.m]
-            try 
-                models = load('models.mat');
-                models = models.temp;
-            catch e
-                e
-                models = [];
+            % Receive GP Models
+            if strcmp(obj.comm_mode, 'MQTT')
+            % Sent over MQTT
+                [models, err, err_flag] = obj.mqtt_interface.receive_bytes(obj.sub_topic); % gp models cell shape [obj.n,obj.m]
+            elseif strcmp(obj.comm_mode, 'FileSharing')
+            % Saved in a File
+                try 
+                    models = load('models.mat');
+                    models = models.temp;
+                catch e
+                    e
+                    models = [];
+                end
             end
+
             % If no data is received then there is nothing to update
             if isempty(models) 
                return 
             end
             fprintf('Obtained Updated Models!\n')
             obj.gpr_models = models;
+            % Update the estimates of the state space grid 
             obj = obj.update_heat_map();
         end
         
@@ -230,7 +250,16 @@ classdef WaypointNode
             legend(lgd_entries, 'Interpreter','latex','FontSize',20,'Location','northeast');
             hold off;
         end
-     
+        
+        function obj = clean_up(obj)
+            %CLEAN_UP Delete any temporary files used for experiment 
+            
+            if strcmp(obj.comm_mode, 'FileSharing')
+                delete('data.mat')
+                delete('models.mat')
+            end
+            
+        end
     end
 end
 

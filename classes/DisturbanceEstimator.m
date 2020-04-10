@@ -1,4 +1,4 @@
-classdef DisturbanceEstimator_mqtt
+classdef DisturbanceEstimator
     %DISTURBANCEESTIMATOR Estimates disturbance for control affine systems
     %   of the form: x_dot(t) = (g(x(t)) + D(x(t)))u(t)
     %   using Gaussian Processes.
@@ -11,6 +11,7 @@ classdef DisturbanceEstimator_mqtt
         threshold_data_num          = 10;                               % min # of new data required to recompute gp models
     end
     properties
+        comm_mode                                                       % Options are 'MQTT', SharedFiles'
         mqtt_interface                                                  % MQTT Interface
         N                                                               % Number of Robots
         n                                                               % Dimension of State
@@ -25,14 +26,21 @@ classdef DisturbanceEstimator_mqtt
     end
     
     methods
-        function obj = DisturbanceEstimator_mqtt(N, n, m, is_sim)
+        function obj = DisturbanceEstimator(N, n, m, is_sim, comm_mode, ip, port)
             %DisturbanceEstimator Construct an instance of this class
             
-            % Setup MQTT Node
-            % Robotarium: mqttInterface = MqttInterface('matlab_node', '192.168.1.8', 1884); 
+            obj.comm_mode           = comm_mode;
+             
+            % Robotarium: mqttInterface = MqttInterface('matlab_node', ); 
             % Localhost:  mqttInterface = MqttInterface('matlab_node', 'localhost', 1883); 
-            obj.mqtt_interface      = MqttInterface('gp_node', 'localhost', 1883, 1);
-            obj.mqtt_interface.subscribe(obj.sub_topic);
+            % Setup MQTT Node
+            if strcmp(comm_mode, 'MQTT')
+                obj.mqtt_interface      = MqttInterface('gp_node', ip, port, 1);
+                obj.mqtt_interface.subscribe(obj.sub_topic);
+            else
+                obj.mqtt_interface      = [];
+            end
+                
             obj.N                   = N;  
             obj.n                   = n;
             obj.m                   = m;
@@ -87,10 +95,14 @@ classdef DisturbanceEstimator_mqtt
             obj.gpr_models{3,2}             = fitrgp(x, y(:,6)); 
             % Reset Count of New Data 
             obj.num_new_data = 0;
+            % Send the Updated Model
+            if strcmp(obj.comm_mode, 'MQTT')
             % Upong Updating the GP Models Sent Them over MQTT
-            %obj.mqtt_interface.send_bytes(obj.pub_topic, obj.gpr_models);
-            temp = obj.gpr_models;
-            save('models.mat', 'temp');
+                obj.mqtt_interface.send_bytes(obj.pub_topic, obj.gpr_models);
+            elseif strcmp(obj.comm_mode, 'FileSharing')
+                temp = obj.gpr_models;
+                save('models.mat', 'temp');
+            end
         end
         
         function obj = clear_traj_data(obj)
@@ -100,14 +112,18 @@ classdef DisturbanceEstimator_mqtt
         function obj = append_traj_data(obj)
             %APPEND_TRAJ_DATA appends trajectory data obtained through mqtt
             
+            % Load The New Data
+            if strcmp(obj.comm_mode, 'MQTT')
             % Get New Data from MQTT under topic: obj.sub_topic
-            %new_data = obj.mqtt_interface.receive_json(obj.sub_topic); % new data shape (size(uncertainty_grid,1),2n+m): [x_i, x_dot_i, u_i]
-            try 
-                new_data = load('data.mat');
-                new_data = new_data.temp;
-            catch e
-                e
-                new_data = [];
+                new_data = obj.mqtt_interface.receive_json(obj.sub_topic); % new data shape (size(uncertainty_grid,1),2n+m): [x_i, x_dot_i, u_i]
+            elseif strcmp(obj.comm_mode, 'FileSharing')
+                try 
+                    new_data = load('data.mat');
+                    new_data = new_data.temp;
+                catch e
+                    e
+                    new_data = [];
+                end
             end
             % new_data = load('data.mat');
             if ~isempty(new_data)
