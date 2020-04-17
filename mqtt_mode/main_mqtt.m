@@ -49,12 +49,14 @@ for t = 1:iterations
         dxu             = uni_barrier_certificate(dxu, x, [], -0.01*ones(n,m,N), 0.01*ones(n,m,N));
     end
     %% Append Data to be saved for GP and save trajectory data
-    if mod(t,100) == 0
+    if mod(t,30) == 0
         waypoint_node = waypoint_node.append_traj_data(x, dxu, x_old, dxu_old);
         plot(x(1,:), x(2,:), 'bo', 'MarkerSize', 30, 'LineWidth', 5);
     end
     %% Send velocities to agents
     % Set velocities of agents 1,...,N
+    %dxu = ones(2,N);
+    %dxu = [0.1 0.2 0.05;pi/4 pi/4 pi/4];
     r.set_velocities(1:N, dxu);
     % Send the previously set velocities to the agents.  This function must be called!
     r.step();

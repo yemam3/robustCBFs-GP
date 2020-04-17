@@ -7,7 +7,7 @@ classdef WaypointNode
         % Transformation Matrix from Differential Drive to Unicycle
         pub_topic           = 'data';                       % Topic to publish to on MQTT
         sub_topic           = 'models';                     % Topic to subscribe to on MQTT
-        bds                 = [-1.4, 1.4, -0.8, 0.8];       % Robotarium Bounds  
+        bds                 = [-1.3, 1.3, -0.7, 0.7];       % Robotarium Bounds  
         dt                  = 0.033;                        % Robotarium Timestep
         granul_htmp         = 0.25;                         % granularity of heatmap
     end
@@ -67,7 +67,7 @@ classdef WaypointNode
             else
                 ids1                = sum((x(1:2,:) - obj.waypoints(1:2,:)).^2, 1) < 0.15;
                 theta_diff          = (x(3,:) - obj.waypoints(3,:));
-                ids2                = abs(atan2(sin(theta_diff), cos(theta_diff))) < pi/6;
+                ids2                = abs(atan2(sin(theta_diff), cos(theta_diff))) < pi/4;
                 ids                 = (ids1 & ids2);
             end
             obj.waypoints(:,ids)    = obj.gen_next_waypoint(x, ids);
@@ -122,15 +122,31 @@ classdef WaypointNode
             x_dot                                   = x_dot / obj.dt;                   % Add Fake Noise Here
             u                                       = dxu_old(:,ids);
             new_data                                = [x_old(:,ids); x_dot; u]';        % new data shape: x x_dot u
+<<<<<<< Updated upstream:mqtt_mode/WaypointNode.m
             new_data(any(abs(u) < 0.03, 1)',:)     = [];                               % Prune data with 0 u
+=======
+            new_data((abs(u(:,1)) < 0.05 | abs(u(:,2)) < pi/6),:)     = [];% Prune data with 0 u
+>>>>>>> Stashed changes:classes/WaypointNode.m
             obj.data(end+1:end+size(new_data,1),:)  = new_data;
             % Send then Clear Newly Collected Data Points 
             if size(obj.data,1) > 10
                 fprintf('Sending data...\n')
+<<<<<<< Updated upstream:mqtt_mode/WaypointNode.m
                 %obj.mqtt_interface.send_json(obj.pub_topic, obj.data);
                 temp = obj.data;
                 save('data.mat','temp');
                 obj.clear_traj_data();       
+=======
+                if strcmp(obj.comm_mode, 'MQTT')
+                % Send over MQTT
+                    obj.mqtt_interface.send_json(obj.pub_topic, obj.data);
+                elseif strcmp(obj.comm_mode, 'FileSharing')
+                % Save in a File
+                    temp = obj.data;
+                    save('data.mat','temp');
+                end
+                obj = obj.clear_traj_data();       
+>>>>>>> Stashed changes:classes/WaypointNode.m
             end
         end
         
