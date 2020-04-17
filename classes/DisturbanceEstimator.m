@@ -12,6 +12,7 @@ classdef DisturbanceEstimator
     end
     properties
         comm_mode                                                       % Options are 'MQTT', SharedFiles'
+        cbf_mode                                                        % CBF Mode (either 'Additive' or 'Multiplicative')
         mqtt_interface                                                  % MQTT Interface
         N                                                               % Number of Robots
         n                                                               % Dimension of State
@@ -26,11 +27,11 @@ classdef DisturbanceEstimator
     end
     
     methods
-        function obj = DisturbanceEstimator(N, n, m, is_sim, comm_mode, ip, port)
+        function obj = DisturbanceEstimator(N, n, m, is_sim, cbf_mode, comm_mode, ip, port)
             %DisturbanceEstimator Construct an instance of this class
             
             obj.comm_mode           = comm_mode;
-             
+            obj.cbf_mode            = cbf_mode;
             % Robotarium: mqttInterface = MqttInterface('matlab_node', ); 
             % Localhost:  mqttInterface = MqttInterface('matlab_node', 'localhost', 1883); 
             % Setup MQTT Node
@@ -63,11 +64,17 @@ classdef DisturbanceEstimator
         function obj = fit_data(obj)
             %fit_data fits gpr models for g(x)
             %
+            % 
             % x_dot = [x_dot; y_dot; theta_dot] = g(x) [v; omega]
-            % where g(x) = [sin(theta), 0
-            %               cos(theta), 0
-            %               0,          1]
+            % cbf_mode == 'Multiplicative':
+            % where g(x) = [sin(theta), 0     [gpr_11,      0
+            %               cos(theta), 0   +  gpr_21,      0
+            %               0,          1]          0, gpr_32]
             % We solely fit a gpr for non-zero entries as of now.
+            % cbf_mode == 'Additive':
+            % where f(x) = [gpr_1
+            %               gpr_2
+            %               gpr_3]
             % Output:
             %   obj.grp_models cell(N,M)
             %   
@@ -76,23 +83,42 @@ classdef DisturbanceEstimator
                 return
             end
             fprintf('Fitting New Models!!!!!\n');
-            obj.gpr_models                  = cell(obj.n, obj.m);
             x                               = obj.data(:,1:obj.n);
             x_dot                           = obj.data(:,obj.n+1:2*obj.n);
             u                               = obj.data(:,2*obj.n+1:end);
             y                               = zeros(size(x_dot,1), obj.n*obj.m);
-            % g(x)_11
-            y(:,1)                          = x_dot(:,1) ./ u(:,1) - cos(x(:,3)); 
-            % g(x)_21
-            y(:,2)                          = x_dot(:,2) ./ u(:,1) - sin(x(:,3));
-            % g(x)_32
-            y(:,6)                          = x_dot(:,3) ./ u(:,2) - 1;
-            % Add fake noise if this is a simulation
-            y = y + obj.fake_noise; % will be all 0s if is_sim =s= 0
-            % Fit Model
-            obj.gpr_models{1,1}             = fitrgp(x, y(:,1)); 
-            obj.gpr_models{2,1}             = fitrgp(x, y(:,2)); 
-            obj.gpr_models{3,2}             = fitrgp(x, y(:,6)); 
+            if strcmp(obj.cbf_mode, 'Multiplicative')
+                obj.gpr_models                  = cell(obj.n, obj.m);
+                % g(x)_11
+                y(:,1)                          = x_dot(:,1) ./ u(:,1) - cos(x(:,3)); 
+                % g(x)_21
+                y(:,2)                          = x_dot(:,2) ./ u(:,1) - sin(x(:,3));
+                % g(x)_32
+                y(:,6)                          = x_dot(:,3) ./ u(:,2) - 1;
+                % Add fake noise if this is a simulation
+                y = y + obj.fake_noise; % will be all 0s if is_sim =s= 0
+                % Fit Model
+                obj.gpr_models{1,1}             = fitrgp(x, y(:,1)); 
+                obj.gpr_models{2,1}             = fitrgp(x, y(:,2)); 
+                obj.gpr_models{3,2}             = fitrgp(x, y(:,6)); 
+            elseif strcmp(obj.cbf_mode, 'Additive')
+                obj.gpr_models                  = cell(obj.n, 1);
+                % f(x)_1
+                y(:,1)                          = x_dot(:,1) - cos(x(:,3)) .* u(:,1); 
+                % f(x)_2
+                y(:,2)                          = x_dot(:,2) - sin(x(:,3)) .* u(:,1);
+                % f(x)_3
+                y(:,6)                          = x_dot(:,3) - u(:,2);
+                % Add fake noise if this is a simulation
+                y = y + obj.fake_noise; % will be all 0s if is_sim =s= 0
+                % Fit Model
+                obj.gpr_models{1}               = fitrgp(x, y(:,1)); 
+                obj.gpr_models{2}               = fitrgp(x, y(:,2)); 
+                obj.gpr_models{3}               = fitrgp(x, y(:,6)); 
+            else
+                error('cbf_mode needs to be either Additive or Multiplicative! Check init file.')
+            end
+            
             % Reset Count of New Data 
             obj.num_new_data = 0;
             % Send the Updated Model
@@ -120,6 +146,7 @@ classdef DisturbanceEstimator
                 try 
                     new_data = load('data.mat');
                     new_data = new_data.temp;
+                    delete('data.mat')
                 catch e
                     e
                     new_data = [];

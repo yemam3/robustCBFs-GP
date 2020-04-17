@@ -13,6 +13,7 @@ classdef WaypointNode
     end
     properties
         comm_mode                                           % Options are 'MQTT', SharedFiles'
+        cbf_mode                                            % CBF Mode (either 'Additive' or 'Multiplicative')
         mqtt_interface                                      % MQTT Interface
         N                                                   % Number of Robots
         n                                                   % Dimension of State
@@ -28,11 +29,11 @@ classdef WaypointNode
     end
     
     methods
-        function obj = WaypointNode(N, n, m, comm_mode, ip, port)
+        function obj = WaypointNode(N, n, m, cbf_mode, comm_mode, ip, port)
             %WAYPOINTNODE Constructor of the class an instance of this class
             
             obj.comm_mode           = comm_mode;
-              
+            obj.cbf_mode            = cbf_mode;  
             % Setup MQTT Node
             if strcmp(comm_mode, 'MQTT')
                 obj.mqtt_interface      = MqttInterface('waypoint_node', ip, port, 1);
@@ -48,8 +49,13 @@ classdef WaypointNode
             obj.waypoint_queue      = [];
             % Intiailize Coordinates for uncertainty grid
             obj.uncertainty_grid    = build_uncertainty_grid(obj.bds,obj.granul_htmp); 
-            obj.all_mus             = zeros([size(obj.uncertainty_grid,1),obj.n*obj.m,0]);
-            obj.all_sigmas          = zeros([size(obj.uncertainty_grid,1),obj.n*obj.m,0]);               
+            if strcmp(cbf_mode, 'Additive')
+                s = obj.n;
+            elseif strcmp(cbf_mode, 'Multiplicative')
+                s = obj.n * obj.m;
+            end
+            obj.all_mus             = zeros([size(obj.uncertainty_grid,1),s,0]);
+            obj.all_sigmas          = zeros([size(obj.uncertainty_grid,1),s,0]);               
             % Data to be sent to the GP node to fit_rgp (resets once sent)
             obj.data                = zeros([0,2*obj.n+obj.m]); 
             % Gaussian Process Models
@@ -208,12 +214,14 @@ classdef WaypointNode
             %  where each mus_ij is a column vector of size -1 (num_data)
             
             assert(size(x,2) == obj.n, 'Columns of x must be of the size of the state x_i');
+            assert(~isempty(obj.gpr_models), 'No GP models obtained to predict from!');
+            
             % Initialize empty mus and sigmas
-            mus    = zeros(size(x,1), obj.n * obj.m);
-            sigmas = zeros(size(x,1), obj.n * obj.m);
+            mus    = zeros(size(x,1), numel(obj.gpr_models));
+            sigmas = zeros(size(x,1), numel(obj.gpr_models));
             % Compute mus and sigmas for each one of the gps
-            for i = 1:obj.n
-                for j = 1:obj.m
+            for i = 1:size(obj.gpr_models,1)
+                for j = 1:size(obj.gpr_models,2)
                     if ~isempty(obj.gpr_models{i,j})
                         [mus_, sigmas_]             = obj.gpr_models{i,j}.predict(x);
                         mus(:,(j-1)*obj.n+i)        = mus_;
@@ -239,10 +247,10 @@ classdef WaypointNode
             ylabel('$\sum\limits_{i,j}^{}\sigma_{i,j}$','Interpreter','latex','FontSize', 30);
             xlabel('iteration','Interpreter','latex','FontSize', 30);
             max_sigmas  = squeeze(max(obj.all_sigmas, [], 1));
-            lgd_entries = cell([1,obj.n*obj.m]);
+            lgd_entries = cell([1,size(obj.all_sigmas,2)]);
             % Plot sigmas vs iterations for each of the gp models (n*m) 
-            for j = 1:obj.m
-                for i = 1:obj.n
+            for j = 1:size(obj.gpr_models,2)
+                for i = 1:size(obj.gpr_models,1)
                     plot(max_sigmas((j-1)*obj.n+i,:), colors((j-1)*obj.n+i), 'LineWidth', 5);
                     lgd_entries{(j-1)*obj.n+i} = ['$\sigma_{',num2str(i),num2str(j),'}$'];
                 end

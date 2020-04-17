@@ -74,7 +74,7 @@ function [ automatic_parking_controller ] = create_minnorm_waypoint_controller(v
         % robots still move (datapoints are only good if dxu > 0)
         v_min = 0.05;
         dxu(1,abs(dxu(1,:))<v_min) = sign(dxu(1,abs(dxu(1,:))<v_min)) * v_min;  
-        omega_min = 0.1;
+        omega_min = 0.2;
         dxu(2,abs(dxu(2,:))<omega_min) = sign(dxu(2,abs(dxu(2,:))<omega_min)) * omega_min;        
     end    
 end
