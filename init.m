@@ -9,9 +9,9 @@ repo_path = fileparts(mfilename('fullpath'));
 addpath(genpath(repo_path));
 
 % Initialize Experimental Details
-IS_SIM                  = 1;                            % Is this a Simulation? (if it is, we'll add some fake noise)
-COMM_MODE               = 'MQTT';                       % Inter-Node Communication Mode ('FileSharing' or 'MQTT')
-N                       = 5;                            % Number of Robots
+IS_SIM                  = 0;                            % Is this a Simulation? (if it is, we'll add some fake noise)
+COMM_MODE               = 'FileSharing';                % Inter-Node Communication Mode ('FileSharing' or 'MQTT')
+N                       = 3;                            % Number of Robots
 n                       = 3;                            % Dimension of state x_i (don't change)
 m                       = 2;                            % Dimension of control u_i  (don't change)
 iterations              = 10000/2;                      % Select the number of iterations for the experiment.
