@@ -11,7 +11,7 @@ addpath(genpath(repo_path));
 % Initialize Experimental Details
 IS_SIM                  = 0;                            % Is this a Simulation? (if it is, we'll add some fake noise)
 COMM_MODE               = 'FileSharing';                % Inter-Node Communication Mode ('FileSharing' or 'MQTT')
-CBF_MODE                = 'Additive';                   % Are 'Additive' or 'Multiplicative' Barriers Running?
+CBF_MODE                = 'Multiplicative';             % Are 'Additive' or 'Multiplicative' Barriers Running?
 N                       = 3;                            % Number of Robots
 n                       = 3;                            % Dimension of state x_i (don't change)
 m                       = 2;                            % Dimension of control u_i  (don't change)
