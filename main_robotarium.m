@@ -16,7 +16,7 @@ elseif strcmp(CBF_MODE, 'Additive')
 else
     error('CBF_MODE needs to be either Multiplicative or Additive! Check init file.')
 end
-pose_controller         = create_parking_controller(); %create_minnorm_waypoint_controller();
+pose_controller         = create_minnorm_controller(); %create_minnorm_waypoint_controller();
 % Disturbance Estimator
 waypoint_node           = WaypointNode(N,n,m,CBF_MODE,COMM_MODE,IP,PORT);
 x_old                   = []; 
@@ -50,7 +50,7 @@ for t = 1:iterations
             [mus_, sigmas_] = waypoint_node.predict(x');
             mus_            = reshape(mus_',[n,N]);
             sigmas_         = reshape(sigmas_',[n,N]);
-            dxu             = uni_barrier_certificate(dxu, x, [], mus_ - 2*sigmas_, mus_ + 2*sigmas_);
+            dxu             = uni_barrier_certificate(dxu, x, [], 0 - 2*sigmas_, 0 + 2*sigmas_); % TODO: instead of 0s should have mus_
         else
             dxu             = uni_barrier_certificate(dxu, x, [], -0.01*ones([n,N]), 0.01*ones([n,N]));
         end
