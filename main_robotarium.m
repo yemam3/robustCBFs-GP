@@ -16,7 +16,7 @@ elseif strcmp(CBF_MODE, 'Additive')
 else
     error('CBF_MODE needs to be either Multiplicative or Additive! Check init file.')
 end
-si_position_controller  = create_minnorm_waypoint_controller();
+pose_controller         = create_parking_controller(); %create_minnorm_waypoint_controller();
 % Disturbance Estimator
 waypoint_node           = WaypointNode(N,n,m,CBF_MODE,COMM_MODE,IP,PORT);
 x_old                   = []; 
@@ -34,7 +34,7 @@ for t = 1:iterations
     % Generate Waypoints (check if reached and updates)
     waypoint_node   = waypoint_node.waypoint_step(x);
     % Generate Robot inputs
-    dxu             = si_position_controller(waypoint_node.waypoints, x);
+    dxu             = pose_controller(waypoint_node.waypoints, x);
     % Collision Avoidance
     if strcmp(CBF_MODE, 'Multiplicative')
         if ~isempty(waypoint_node.gpr_models)
@@ -56,12 +56,14 @@ for t = 1:iterations
         end
     end
     %% Append Data to be saved for GP and save trajectory data
-    if mod(t,100) == 0
+    if mod(t,35) == 0
         waypoint_node = waypoint_node.append_traj_data(x, dxu, x_old, dxu_old);
         plot(x(1,:), x(2,:), 'bo', 'MarkerSize', 30, 'LineWidth', 5);
     end
     %% Send velocities to agents
     % Set velocities of agents 1,...,N
+    dxu = zeros(2,N);
+    dxu(2,:) = 0.1;
     r.set_velocities(1:N, dxu);
     % Send the previously set velocities to the agents.  This function must be called!
     r.step();
@@ -82,4 +84,4 @@ waypoint_node.plot_sigmas();
 waypoint_node.clean_up();
 % We should call r.call_at_scripts_end() after our experiment is over!
 r.debug();
-save(['saved_data/main_mqtt_workspace_', date_string,'.mat'], 'waypoint_node', 'x_data', 'u_data');
+save(['saved_data/main_mqtt_workspace_', CBF_MODE, '_', date_string,'.mat'], 'waypoint_node', 'x_data', 'u_data');

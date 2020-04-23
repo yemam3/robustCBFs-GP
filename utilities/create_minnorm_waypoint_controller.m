@@ -15,12 +15,12 @@ function [ automatic_parking_controller ] = create_minnorm_waypoint_controller(v
 %       to position
 
     p = inputParser;
-    addOptional(p, 'LinearVelocityGain', 0.8);
-    addOptional(p, 'AngularVelocityLimit', pi);
+    addOptional(p, 'LinearVelocityGain', 1.0);
+    addOptional(p, 'AngularVelocityLimit', pi/3);
     addOptional(p, 'PositionError', 0.03);
     addOptional(p, 'PositionEpsilon', 0.01)
     addOptional(p, 'RotationError', 0.05);
-    addOptional(p, 'VelocityMagnitudeLimit', 0.20)
+    addOptional(p, 'VelocityMagnitudeLimit', 0.13)
     parse(p, varargin{:});
     
     lin_vel_gain = p.Results.LinearVelocityGain; 
@@ -72,9 +72,10 @@ function [ automatic_parking_controller ] = create_minnorm_waypoint_controller(v
         end
         % In case any entry is too close to 0 bump it a bit to ensure
         % robots still move (datapoints are only good if dxu > 0)
+        dxu(abs(dxu) == 0) = 0.01;
         v_min = 0.05;
         dxu(1,abs(dxu(1,:))<v_min) = sign(dxu(1,abs(dxu(1,:))<v_min)) * v_min;  
-        omega_min = 0.2;
+        omega_min = 0.3;
         dxu(2,abs(dxu(2,:))<omega_min) = sign(dxu(2,abs(dxu(2,:))<omega_min)) * omega_min;        
     end    
 end

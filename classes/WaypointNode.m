@@ -79,7 +79,7 @@ classdef WaypointNode
             else
                 ids1                = sum((x(1:2,:) - obj.waypoints(1:2,:)).^2, 1) < 0.15;
                 theta_diff          = (x(3,:) - obj.waypoints(3,:));
-                ids2                = abs(atan2(sin(theta_diff), cos(theta_diff))) < pi/6;
+                ids2                = abs(atan2(sin(theta_diff), cos(theta_diff))) < pi/4;
                 ids                 = (ids1 & ids2);
             end
             obj.waypoints(:,ids)    = obj.gen_next_waypoint(x, ids);
@@ -134,7 +134,7 @@ classdef WaypointNode
             x_dot                                   = x_dot / obj.dt;                   % Add Fake Noise Here
             u                                       = dxu_old(:,ids);
             new_data                                = [x_old(:,ids); x_dot; u]';        % new data shape: x x_dot u
-            new_data(any(abs(u) < 0.003, 1)',:)     = [];                               % Prune data with 0 u
+            new_data(any(abs(u) < 0.05, 1)',:)      = [];                               % Prune data with 0 u
             obj.data(end+1:end+size(new_data,1),:)  = new_data;
             
             % Send then Clear Newly Collected Data Points 
@@ -148,7 +148,7 @@ classdef WaypointNode
                     temp = obj.data;
                     save('data.mat','temp');
                 end
-                obj.clear_traj_data();       
+                obj = obj.clear_traj_data();       
             end
         end
         
