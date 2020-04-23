@@ -34,7 +34,7 @@ for t = 1:iterations
     % Generate Waypoints (check if reached and updates)
     waypoint_node   = waypoint_node.waypoint_step(x);
     % Generate Robot inputs
-    dxu             = pose_controller(waypoint_node.waypoints, x);
+    dxu             = pose_controller(x, waypoint_node.waypoints);
     % Collision Avoidance
     if strcmp(CBF_MODE, 'Multiplicative')
         if ~isempty(waypoint_node.gpr_models)
@@ -62,8 +62,6 @@ for t = 1:iterations
     end
     %% Send velocities to agents
     % Set velocities of agents 1,...,N
-    dxu = zeros(2,N);
-    dxu(2,:) = 0.1;
     r.set_velocities(1:N, dxu);
     % Send the previously set velocities to the agents.  This function must be called!
     r.step();

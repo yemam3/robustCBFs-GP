@@ -134,7 +134,9 @@ classdef WaypointNode
             x_dot                                   = x_dot / obj.dt;                   % Add Fake Noise Here
             u                                       = dxu_old(:,ids);
             new_data                                = [x_old(:,ids); x_dot; u]';        % new data shape: x x_dot u
-            new_data(any(abs(u) < 0.05, 1)',:)      = [];                               % Prune data with 0 u
+            % Delete data with small u
+            del_inds = (abs(u(1,:)) < 0.05) | (abs(u(2,:)) < 0.1);
+            new_data(del_inds,:)      = [];                                             % Prune data with 0 u
             obj.data(end+1:end+size(new_data,1),:)  = new_data;
             
             % Send then Clear Newly Collected Data Points 

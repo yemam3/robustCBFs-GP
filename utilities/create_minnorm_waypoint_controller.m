@@ -35,7 +35,7 @@ function [ automatic_parking_controller ] = create_minnorm_waypoint_controller(v
 
     automatic_parking_controller = @automatic_parking_controller_;
 
-    function [dxu] = automatic_parking_controller_(poses, states)
+    function [dxu] = automatic_parking_controller_(states, poses)
         
         N               = size(states, 2);
         dxu             = zeros(2, N);

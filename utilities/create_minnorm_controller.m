@@ -12,13 +12,13 @@
 %   parking_controller = create_parking_controller('ApproachAngleGain', 1,
 %   DesiredAngleGain', 1, 'RotationErrorGain', 1);
 %% Implementation
-function [ parking_controller ] = create_parking_controller(varargin)
+function [ parking_controller ] = create_minnorm_controller(varargin)
 
     p = inputParser;
-    addOptional(p, 'ApproachAngleGain', 1);
-    addOptional(p, 'DesiredAngleGain', 2.7); 
-    addOptional(p, 'RotationErrorGain', 1);
-    addOptional(p, 'MinNorm', 0.1);
+    addOptional(p, 'ApproachAngleGain', 0.8);
+    addOptional(p, 'DesiredAngleGain', 0.7); 
+    addOptional(p, 'RotationErrorGain', 0.8);
+    addOptional(p, 'MinNorm', 0.05);
     parse(p, varargin{:});
     
     gamma = p.Results.ApproachAngleGain; 
