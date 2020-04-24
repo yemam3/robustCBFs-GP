@@ -70,13 +70,13 @@ function [ automatic_parking_controller ] = create_minnorm_waypoint_controller(v
             dxu(:,dxu_norms<min_norm)   = dxu(:,dxu_norms<min_norm) ./ dxu_norms(dxu_norms<min_norm) * min_norm; 
             dxu(isnan(dxu))             = 0; % Takes care of the case where (norm == 0)
         end
-        % In case any entry is too close to 0 bump it a bit to ensure
-        % robots still move (datapoints are only good if dxu > 0)
-        dxu(abs(dxu) == 0) = 0.01;
-        v_min = 0.05;
-        dxu(1,abs(dxu(1,:))<v_min) = sign(dxu(1,abs(dxu(1,:))<v_min)) * v_min;  
-        omega_min = 0.3;
-        dxu(2,abs(dxu(2,:))<omega_min) = sign(dxu(2,abs(dxu(2,:))<omega_min)) * omega_min;        
+%         % In case any entry is too close to 0 bump it a bit to ensure
+%         % robots still move (datapoints are only good if dxu > 0)
+%         dxu(abs(dxu) == 0) = 0.01;
+%         v_min = 0.05;
+%         dxu(1,abs(dxu(1,:))<v_min) = sign(dxu(1,abs(dxu(1,:))<v_min)) * v_min;  
+%         omega_min = 0.3;
+%         dxu(2,abs(dxu(2,:))<omega_min) = sign(dxu(2,abs(dxu(2,:))<omega_min)) * omega_min;        
     end    
 end
 

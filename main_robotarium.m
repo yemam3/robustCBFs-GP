@@ -41,22 +41,22 @@ for t = 1:iterations
             [mus_, sigmas_] = waypoint_node.predict(x');
             mus_            = reshape(mus_',[n,m,N]);
             sigmas_         = reshape(sigmas_',[n,m,N]);
-            dxu             = uni_barrier_certificate(dxu, x, [], mus_ - 2*sigmas_, mus_ + 2*sigmas_);
+            dxu             = uni_barrier_certificate(dxu, x, [], mus_ - 2*sigmas_, mus_ + 2*sigmas_); 
         else
-            dxu             = uni_barrier_certificate(dxu, x, [], -0.01*ones([n,m,N]), 0.01*ones([n,m,N]));
+            dxu             = uni_barrier_certificate(dxu, x, [], -0.1*ones([n,m,N]), 0.1*ones([n,m,N]));
         end
     elseif strcmp(CBF_MODE, 'Additive')
         if ~isempty(waypoint_node.gpr_models)
             [mus_, sigmas_] = waypoint_node.predict(x');
             mus_            = reshape(mus_',[n,N]);
             sigmas_         = reshape(sigmas_',[n,N]);
-            dxu             = uni_barrier_certificate(dxu, x, [], 0 - 2*sigmas_, 0 + 2*sigmas_); % TODO: instead of 0s should have mus_
+            dxu             = uni_barrier_certificate(dxu, x, [], mus_ - 2*sigmas_, mus_ + 2*sigmas_); 
         else
-            dxu             = uni_barrier_certificate(dxu, x, [], -0.01*ones([n,N]), 0.01*ones([n,N]));
+            dxu             = uni_barrier_certificate(dxu, x, [], -0.1*ones([n,N]), 0.1*ones([n,N]));
         end
     end
     %% Append Data to be saved for GP and save trajectory data
-    if mod(t,35) == 0
+    if mod(t,10) == 0
         waypoint_node = waypoint_node.append_traj_data(x, dxu, x_old, dxu_old);
         plot(x(1,:), x(2,:), 'bo', 'MarkerSize', 30, 'LineWidth', 5);
     end

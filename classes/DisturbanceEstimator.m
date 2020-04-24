@@ -7,7 +7,7 @@ classdef DisturbanceEstimator
         pub_topic                   = 'models';                         % topic to publish to on mqtt
         sub_topic                   = 'data';                           % topic to subscribe to on mqtt
         granul_htmp                 = 0.25;                             % granularity of heatmap
-        threshold_data_num          = 10;                               % min # of new data required to recompute gp models
+        threshold_data_num          = 50;                               % min # of new data required to recompute gp models
     end
     properties
         comm_mode                                                       % Options are 'MQTT', SharedFiles'

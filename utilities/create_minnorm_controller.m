@@ -53,7 +53,7 @@ function [ parking_controller ] = create_minnorm_controller(varargin)
             alpha = theta - (states(3, i) - poses(3, i));
             alpha = atan2(sin(alpha), cos(alpha));
 
-            ca = cos(alpha);
+            ca = abs(cos(alpha)); % Restricting Linear velocity to only forward
             sa = sin(alpha);
 
             dxu(1, i) = gamma * e * ca;

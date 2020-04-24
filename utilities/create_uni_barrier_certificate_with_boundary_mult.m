@@ -41,7 +41,7 @@ function [ uni_barrier_certificate ] = create_uni_barrier_certificate_with_bound
     addOptional(parser, 'MaxObstacles', 50);
     addOptional(parser, 'MaxNumBoundaryPoints', 4);
     addOptional(parser, 'BoundaryPoints', [-1.6 1.6 -1.0 1.0]);
-    addOptional(parser, 'MaxDisturbance', 0.5);
+    addOptional(parser, 'MaxDisturbance', 10);
     parse(parser, varargin{:})  
     
     opts = optimoptions(@quadprog,'Display', 'off', 'TolFun', 1e-5, 'TolCon', 1e-4);       
