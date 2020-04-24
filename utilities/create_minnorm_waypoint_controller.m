@@ -16,6 +16,7 @@ function [ automatic_parking_controller ] = create_minnorm_waypoint_controller(v
 
     p = inputParser;
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
     addOptional(p, 'LinearVelocityGain', 0.8);
 =======
     addOptional(p, 'LinearVelocityGain', 1);
@@ -25,6 +26,14 @@ function [ automatic_parking_controller ] = create_minnorm_waypoint_controller(v
     addOptional(p, 'PositionEpsilon', 0.01)
     addOptional(p, 'RotationError', 0.05);
     addOptional(p, 'VelocityMagnitudeLimit', 0.15)
+=======
+    addOptional(p, 'LinearVelocityGain', 1.0);
+    addOptional(p, 'AngularVelocityLimit', pi);
+    addOptional(p, 'PositionError', 0.03);
+    addOptional(p, 'PositionEpsilon', 0.01)
+    addOptional(p, 'RotationError', 0.05);
+    addOptional(p, 'VelocityMagnitudeLimit', 0.2)
+>>>>>>> Stashed changes
     parse(p, varargin{:});
     
     lin_vel_gain = p.Results.LinearVelocityGain; 
@@ -33,7 +42,7 @@ function [ automatic_parking_controller ] = create_minnorm_waypoint_controller(v
     pos_err = p.Results.PositionError;
     pos_eps = p.Results.PositionEpsilon;
     rot_err = p.Results.RotationError;
-    min_norm = 0.1;
+    min_norm = 0.2;
     position_controller = create_si_to_uni_dynamics('LinearVelocityGain', lin_vel_gain, ...
     'AngularVelocityLimit', ang_vel_limit);
 
@@ -70,10 +79,10 @@ function [ automatic_parking_controller ] = create_minnorm_waypoint_controller(v
 
         % Max Sure that robots move with a min norm speed
         dxu_norms                       = sqrt(sum(dxu.^2,1));
-        if any(dxu_norms<min_norm)
-            dxu(:,dxu_norms<min_norm)   = dxu(:,dxu_norms<min_norm) ./ dxu_norms(dxu_norms<min_norm) * min_norm; 
-            dxu(isnan(dxu))             = 0; % Takes care of the case where (norm == 0)
-        end
+        %if any(dxu_norms<min_norm)
+        %    dxu(:,dxu_norms<min_norm)   = dxu(:,dxu_norms<min_norm) ./ dxu_norms(dxu_norms<min_norm) * min_norm; 
+        %    dxu(isnan(dxu))             = 0; % Takes care of the case where (norm == 0)
+        %end
         % In case any entry is too close to 0 bump it a bit to ensure
         % robots still move (datapoints are only good if dxu > 0)
 <<<<<<< Updated upstream
@@ -83,7 +92,11 @@ function [ automatic_parking_controller ] = create_minnorm_waypoint_controller(v
         dxu(abs(dxu) == 0) = 0.01;
         v_min = 0.1;
         dxu(1,abs(dxu(1,:))<v_min) = sign(dxu(1,abs(dxu(1,:))<v_min)) * v_min;  
+<<<<<<< Updated upstream
         omega_min = 0.5;
+=======
+        omega_min = 0.1;
+>>>>>>> Stashed changes
         dxu(2,abs(dxu(2,:))<omega_min) = sign(dxu(2,abs(dxu(2,:))<omega_min)) * omega_min;        
 >>>>>>> Stashed changes
     end    

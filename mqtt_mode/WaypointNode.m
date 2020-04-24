@@ -123,9 +123,21 @@ classdef WaypointNode
             u                                       = dxu_old(:,ids);
             new_data                                = [x_old(:,ids); x_dot; u]';        % new data shape: x x_dot u
 <<<<<<< Updated upstream:mqtt_mode/WaypointNode.m
+<<<<<<< Updated upstream:mqtt_mode/WaypointNode.m
             new_data(any(abs(u) < 0.03, 1)',:)     = [];                               % Prune data with 0 u
 =======
             new_data((abs(u(:,1)) < 0.05 | abs(u(:,2)) < pi/6),:)     = [];% Prune data with 0 u
+>>>>>>> Stashed changes:classes/WaypointNode.m
+=======
+            % Delete data with small u
+            del_inds = (abs(u(1,:)) < 0.03) | (abs(u(2,:)) < 0.1);                                            % Prune data with 0 u
+            % Delete data with unreasonable motor speed
+            v = (x_dot(1,:)./cos(x(3,:))+x_dot(2,:)./sin(x(3,:)))/2; %sensed linear velocity estimate
+            w = x_dot(3,:); %sensed angular velocity estimate
+            vl = abs((2*v - w*0.105)./(2*0.016));
+            vr = abs((2*v + w*0.105)./(2*0.016));
+            del_inds = (del_inds | abs(w) < 0.05 | vl > 16 | vr > 16);
+            new_data(del_inds,:) = [];
 >>>>>>> Stashed changes:classes/WaypointNode.m
             obj.data(end+1:end+size(new_data,1),:)  = new_data;
             % Send then Clear Newly Collected Data Points 

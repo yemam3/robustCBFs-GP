@@ -8,7 +8,7 @@ classdef DisturbanceEstimator_mqtt
         sub_topic                   = 'data';                           % topic to subscribe to on mqtt
         bds                         = [-1.4, 1.4, -0.8, 0.8, -pi, pi];  % state space boundaries
         granul_htmp                 = 0.25;                             % granularity of heatmap
-        threshold_data_num          = 10;                               % min # of new data required to recompute gp models
+        threshold_data_num          = 50;                               % min # of new data required to recompute gp models
     end
     properties
         mqtt_interface                                                  % MQTT Interface
