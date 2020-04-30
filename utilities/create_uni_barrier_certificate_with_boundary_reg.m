@@ -1,4 +1,4 @@
-function [ uni_barrier_certificate ] = create_uni_barrier_certificate_with_boundary_add(varargin)
+function [ uni_barrier_certificate ] = create_uni_barrier_certificate_with_boundary_reg(varargin)
 % CREATE_SI_BARRIER_CERTIFICATE Creates a unicycle barrier
 % certificate function to avoid collisions.
 %
@@ -37,6 +37,7 @@ function [ uni_barrier_certificate ] = create_uni_barrier_certificate_with_bound
     addOptional(parser, 'BaseLength', 0.105);
     addOptional(parser, 'WheelRadius', 0.016);
     addOptional(parser, 'WheelVelocityLimit', 12.5);
+    addOptional(parser, 'Disturbance', 2);
     addOptional(parser, 'MaxNumRobots', 30);
     addOptional(parser, 'MaxObstacles', 50);
     addOptional(parser, 'MaxNumBoundaryPoints', 4);
@@ -50,6 +51,7 @@ function [ uni_barrier_certificate ] = create_uni_barrier_certificate_with_bound
     wheel_radius = parser.Results.WheelRadius;
     base_length = parser.Results.BaseLength;
     wheel_vel_limit = parser.Results.WheelVelocityLimit;
+    d = parser.Results.Disturbance;
     max_num_robots = parser.Results.MaxNumRobots;
     max_num_boundaries = parser.Results.MaxNumBoundaryPoints;
     max_num_obstacles = parser.Results.MaxObstacles;
@@ -62,6 +64,8 @@ function [ uni_barrier_certificate ] = create_uni_barrier_certificate_with_bound
      
     D = [wheel_radius/2, wheel_radius/2; -wheel_radius/base_length, wheel_radius/base_length];
     L = [1,0;0,projection_distance] * D;
+    disturb = [-d,-d,d,d;-d,d,d,-d];
+    num_disturbs = size(disturb, 2);
 % 
 %     max_num_constraints = (num_disturbs^2)*nchoosek(max_num_robots, 2) + max_num_robots*max_num_obstacles*num_disturbs + max_num_robots;
     
@@ -78,7 +82,7 @@ function [ uni_barrier_certificate ] = create_uni_barrier_certificate_with_bound
     uni_barrier_certificate = @barrier_unicycle;
     
 
-    function [ dxu, ret ] = barrier_unicycle(dxu, x, obstacles, psi_1, psi_2)   
+    function [ dxu, ret ] = barrier_unicycle(dxu, x, obstacles)   
         % BARRIER_UNICYCLE The parameterized barrier function
         %
         %   Args:
@@ -106,6 +110,7 @@ function [ uni_barrier_certificate ] = create_uni_barrier_certificate_with_bound
            
         %Generate constraints for barrier certificates based on the size of
         %the safety radius
+%         num_constraints = (num_disturbs^2)*temp + num_robots*num_obstacles*num_disturbs + num_robots;
         num_constraints = temp + num_robots*num_obstacles + 4*num_robots;
         A(1:num_constraints, 1:2*num_robots) = 0;
         Os(1,1:num_robots) = cos(x(3, :)); 
@@ -116,36 +121,21 @@ function [ uni_barrier_certificate ] = create_uni_barrier_certificate_with_bound
         Ms(2,2:2:2*num_robots) = projection_distance*Os(1,1:num_robots);
         Ms(2,1:2:2*num_robots) = Os(2,1:num_robots);
         ret = 10;
-        
-        % Sum the convex hulls for p_dot (check transformation)
-        psi_1(4,:) = projection_distance * cos(x(3, :)) .* psi_1(3,:);
-        psi_1(3,:) = -projection_distance * sin(x(3, :)) .* psi_1(3,:);
-        psi_2(4,:) = projection_distance * cos(x(3, :)) .* psi_2(3,:);
-        psi_2(3,:) = -projection_distance * sin(x(3, :)) .* psi_2(3,:);
-        
-        % Assuming the tracking returns us p_x and p_y, not x and y, then
-        % the disturbance we are measuring is on p and there is no need
-        % to add the theta disturbance that appears due to the
-        % transformation. So basically, if the disturbance coming in is on
-        % xytheta, then don't comment out the min max, if on p_xp_y, do
-        % comment it out.
-        disturb_1 = psi_1(1:2,:) + min(psi_1(3:4,:),psi_2(3:4,:)); % 2xN
-        disturb_2 = psi_2(1:2,:) + max(psi_1(3:4,:),psi_2(3:4,:)); % 2xN
-        
-        
+
         count = 1;
         for i = 1:(num_robots-1)
             for j = (i+1):num_robots
                 diff = ps(:, i) - ps(:, j);
-                if sum(diff.^2,1) < ret
-                    ret = sum(diff.^2,1);
-                end
                 hs = sum(diff.^2,1) - safety_radius^2;
-                h_dot_i = 2*(diff)'*Ms(:,2*i-1:2*i);
-                h_dot_j = -2*(diff)'*Ms(:,2*j-1:2*j);                
-                A(count, (2*i-1):(2*i)) = h_dot_i*D;
-                A(count, (2*j-1):(2*j)) = h_dot_j*D;
-                b(count) = -gamma*hs.^3 - min(h_dot_i*disturb_1(:,i), h_dot_i*disturb_2(:,i)) - min(h_dot_j*disturb_1(:,j), h_dot_j*disturb_2(:,j));                  
+                
+                h_dot_i = 2*(diff)'*Ms(:,2*i-1:2*i)*D;
+                h_dot_j = -2*(diff)'*Ms(:,2*j-1:2*j)*D;                
+                A(count, (2*i-1):(2*i)) = h_dot_i;
+                A(count, (2*j-1):(2*j)) = h_dot_j;
+                b(count) = -gamma*hs.^3 - min(h_dot_i*disturb) - min(h_dot_j*disturb);  %repmat(h_i_disturbs, num_disturbs, 1) + repelem(h_j_disturbs, num_disturbs, 1);
+                if sum(diff.^2,1) < ret
+                   ret = sum(diff.^2,1); 
+                end
                 count = count + 1;
             end
         end
@@ -157,7 +147,7 @@ function [ uni_barrier_certificate ] = create_uni_barrier_certificate_with_bound
                 h = sum(diffs.^2, 2) - safety_radius^2;
                 h_dot_i = 2*diffs*Ms(:,2*i-1:2*i)*D;
                 A(count:count+num_obstacles-1,(2*i-1):(2*i)) = h_dot_i;
-                b(count:count+num_obstacles-1) = -gamma*h.^3;               
+                b(count:count+num_obstacles-1) = -gamma*h.^3  - min(h_dot_i*disturb, [], 2);               
                 count = count + num_obstacles;
             end
         end
@@ -194,14 +184,12 @@ function [ uni_barrier_certificate ] = create_uni_barrier_certificate_with_bound
         H = 2*(L_all')*L_all;
         f = -2*vhat'*(L_all')*L_all;
         vnew = quadprog(H, double(f), -A(1:num_constraints,1:2*num_robots), -b(1:num_constraints), [], [], -wheel_vel_limit*ones(2*num_robots,1), wheel_vel_limit*ones(2*num_robots,1), [], opts);
-        if isempty(vnew)
-            dxu = zeros(2, num_robots);
-            warning('No Solution for Barriers!')
-        else
-            %Set robot velocities to new velocities
-            dxu = reshape(vnew, 2, num_robots);
-            dxu = D*dxu;
-        end
+        %disp('f')
+        %f(1:4)
+        %Set robot velocities to new velocities
+        dxu = reshape(vnew, 2, num_robots);
+        dxu = D*dxu;
+        
     end
 end
 

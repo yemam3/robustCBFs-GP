@@ -155,13 +155,16 @@ function [ uni_barrier_certificate ] = create_uni_barrier_certificate_with_bound
         ps(:,1:num_robots) = x(1:2, :) + projection_distance*Os(:,1:num_robots);
         
         % Want to return pairwise hs as well
-        ret = zeros(1, temp);
+        ret = 10;
         
         count = 1;
         for i = 1:(num_robots-1)
             for j = (i+1):num_robots
                 % Difference between centroids of robots
                 diff = ps(:, i) - ps(:, j);
+                if sum(diff.^2,1) < ret
+                    ret = sum(diff.^2,1);
+                end
                 % h is the barrier function
                 hs = sum(diff.^2,1) - safety_radius^2;
                 % We want to multiply diff by M in a way we can add
@@ -182,7 +185,6 @@ function [ uni_barrier_certificate ] = create_uni_barrier_certificate_with_bound
                                 A(count, (2*i-1):(2*i)) = h_dot_i;
                                 A(count, (2*j-1):(2*j)) = h_dot_j;
                                 b(count) = -gamma*hs.^3; 
-                                ret(count) = hs;
                                 count = count + 1;
                             end
                         end

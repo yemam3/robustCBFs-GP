@@ -2,20 +2,22 @@ clc
 clear
 close all
 %clear java
-rng(7) % Fix Random Seed
+%rng(10) % Fix Random Seed
 
 % Changes Current Directory to src and recursively add children
 repo_path = fileparts(mfilename('fullpath')); 
 addpath(genpath(repo_path));
 
 % Initialize Experimental Details
-IS_SIM                  = 0;                            % Is this a Simulation? (if it is, we'll add some fake noise)
+IS_SIM                  = 1;                            % Is this a Simulation? (if it is, we'll add some fake noise)
 COMM_MODE               = 'FileSharing';                % Inter-Node Communication Mode ('FileSharing' or 'MQTT')
-CBF_MODE                = 'Multiplicative';             % Are 'Additive' or 'Multiplicative' Barriers Running?
-N                       = 3;                            % Number of Robots
+CBF_MODE                = 'Regular';                    % No/Additive/Multiplicative Disturbance: 'Regular', 'Additive', 'Multiplicative' 
+SAFETY_RADIUS           = 0.10;                         % How big is the safety radius between robots?
+NOMINAL_RADIUS          = 0.10;                         % How big is the circle in reality? 
+N                       = 5;                            % Number of Robots
 n                       = 3;                            % Dimension of state x_i (don't change)
 m                       = 2;                            % Dimension of control u_i  (don't change)
-iterations              = 10000/2;                      % Select the number of iterations for the experiment.
+iterations              = 10000/4;                      % Select the number of iterations for the experiment.
 date_string = datestr(datetime('now'),'HH:MM:SS.FFF');  % For Data Saving Purposes
 % Define IP & Port to be used 
 IP                      = 'localhost';                  % Robotarium: '192.168.1.8' Local: 'localhost'

@@ -10,10 +10,12 @@ init;
 r                       = Robotarium('NumberOfRobots', N, 'ShowFigure', true);
 % Intialize Controllers and Safety Functions
 if strcmp(CBF_MODE, 'Multiplicative')
-    uni_barrier_certificate = create_uni_barrier_certificate_with_boundary_mult();
+    uni_barrier_certificate = create_uni_barrier_certificate_with_boundary_mult('SafetyRadius', SAFETY_RADIUS);
 elseif strcmp(CBF_MODE, 'Additive')
-    uni_barrier_certificate = create_uni_barrier_certificate_with_boundary_add();
-else
+    uni_barrier_certificate = create_uni_barrier_certificate_with_boundary_add('SafetyRadius', SAFETY_RADIUS);
+elseif strcmp(CBF_MODE, 'Regular')
+    uni_barrier_certificate = create_uni_barrier_certificate_with_boundary_reg('Disturbance',0,'SafetyRadius', SAFETY_RADIUS);
+else 
     error('CBF_MODE needs to be either Multiplicative or Additive! Check init file.')
 end
 pose_controller         = create_minnorm_controller(); %create_minnorm_waypoint_controller();
@@ -23,12 +25,16 @@ x_old                   = [];
 x_data                  = zeros(3,N,0); 
 u_data                  = zeros(2,N,0);
 t_data                  = [];
+min_h_data              = [];
 t_stamp                 = tic;
 
 % Main Loop
 for t = 1:iterations
     % Retrieve the most recent poses from the Robotarium (dt = 0.033)
-    x               = r.get_poses();
+    x               = r.get_poses(); 
+    if IS_SIM 
+        x               = x + 0.0005*(randn(size(x)));
+    end
     
     %% Compute Waypoints
     % Generate Waypoints (check if reached and updates)
@@ -41,19 +47,21 @@ for t = 1:iterations
             [mus_, sigmas_] = waypoint_node.predict(x');
             mus_            = reshape(mus_',[n,m,N]);
             sigmas_         = reshape(sigmas_',[n,m,N]);
-            dxu             = uni_barrier_certificate(dxu, x, [], mus_ - 2*sigmas_, mus_ + 2*sigmas_); 
+            [dxu, min_h]    = uni_barrier_certificate(dxu, x, [], mus_ - 2*sigmas_, mus_ + 2*sigmas_); 
         else
-            dxu             = uni_barrier_certificate(dxu, x, [], -0.1*ones([n,m,N]), 0.1*ones([n,m,N]));
+            [dxu, min_h]    = uni_barrier_certificate(dxu, x, [], -0.1*ones([n,m,N]), 0.1*ones([n,m,N]));
         end
     elseif strcmp(CBF_MODE, 'Additive')
         if ~isempty(waypoint_node.gpr_models)
             [mus_, sigmas_] = waypoint_node.predict(x');
             mus_            = reshape(mus_',[n,N]);
             sigmas_         = reshape(sigmas_',[n,N]);
-            dxu             = uni_barrier_certificate(dxu, x, [], mus_ - 2*sigmas_, mus_ + 2*sigmas_); 
+            [dxu, min_h]    = uni_barrier_certificate(dxu, x, [], mus_ - 2*sigmas_, mus_ + 2*sigmas_); 
         else
-            dxu             = uni_barrier_certificate(dxu, x, [], -0.1*ones([n,N]), 0.1*ones([n,N]));
+            [dxu, min_h]    = uni_barrier_certificate(dxu, x, [], -0.05*ones([n,N]), 0.05*ones([n,N]));
         end
+    else % No Disturbance
+        [dxu, min_h]        = uni_barrier_certificate(dxu, x, []);
     end
     %% Append Data to be saved for GP and save trajectory data
     if mod(t,10) == 0
@@ -72,9 +80,10 @@ for t = 1:iterations
     x_data          = cat(3,x_data, x);
     u_data          = cat(3,u_data, dxu);
     t_data          = toc(t_stamp);
+    min_h_data      = cat(1,min_h_data,min_h - NOMINAL_RADIUS^2);
     % Save Data
     if mod(t,300) == 0
-        save(['saved_data/main_mqtt_workspace_', CBF_MODE, '_', date_string,'.mat'], 'waypoint_node', 'x_data', 'u_data', 't_data');
+        save(['saved_data/robotarium_', CBF_MODE, '_', num2str(SAFETY_RADIUS*100), '_', date_string,'.mat'], 'waypoint_node', 'x_data', 'u_data', 'min_h_data');
     end
 end
 
@@ -82,4 +91,8 @@ waypoint_node.plot_sigmas();
 waypoint_node.clean_up();
 % We should call r.call_at_scripts_end() after our experiment is over!
 r.debug();
-save(['saved_data/main_mqtt_workspace_', CBF_MODE, '_', date_string,'.mat'], 'waypoint_node', 'x_data', 'u_data');
+save(['saved_data/robotarium_', CBF_MODE, '_', num2str(SAFETY_RADIUS*100), '_', date_string,'.mat'], 'waypoint_node', 'x_data', 'u_data', 'min_h_data');
+figure(1001);hold on;grid on;
+xlabel('iter'); ylabel('min_{ij}(h_ij(t))');
+plot(1:iterations,min_h_data,'b'); 
+plot(1:iterations,zeros(1,iterations),'r')

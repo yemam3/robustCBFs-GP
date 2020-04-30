@@ -53,6 +53,8 @@ classdef WaypointNode
                 s = obj.n;
             elseif strcmp(cbf_mode, 'Multiplicative')
                 s = obj.n * obj.m;
+            elseif strcmp(cbf_mode, 'Regular')
+                s = 0;
             end
             obj.all_mus             = zeros([size(obj.uncertainty_grid,1),s,0]);
             obj.all_sigmas          = zeros([size(obj.uncertainty_grid,1),s,0]);               
@@ -70,7 +72,7 @@ classdef WaypointNode
             %       x: 3xN matrix containing state of robots
             
             obj.counter_models       = obj.counter_models + 1;
-            if mod(obj.counter_models, 100) == 0
+            if mod(obj.counter_models, 100) == 0 && ~strcmp(obj.cbf_mode, 'Regular')
                 obj                     = obj.update_models();
                 obj.counter_models      = 0;
             end
@@ -140,7 +142,7 @@ classdef WaypointNode
             obj.data(end+1:end+size(new_data,1),:)  = new_data;
             
             % Send then Clear Newly Collected Data Points 
-            if size(obj.data,1) > 10
+            if size(obj.data,1) > 10 && ~strcmp(obj.cbf_mode, 'Regular')
                 fprintf('Sending data...\n')
                 if strcmp(obj.comm_mode, 'MQTT')
                 % Send over MQTT
@@ -246,7 +248,7 @@ classdef WaypointNode
             hold on; grid on;
             ax          = gca;
             ax.FontSize = 20;
-            ylabel('$\sum\limits_{i,j}^{}\sigma_{i,j}$','Interpreter','latex','FontSize', 30);
+            ylabel('$\max\sigma_{i,j}$','Interpreter','latex','FontSize', 30);
             xlabel('iteration','Interpreter','latex','FontSize', 30);
             max_sigmas  = squeeze(max(obj.all_sigmas, [], 1));
             lgd_entries = cell([1,size(obj.all_sigmas,2)]);
@@ -264,7 +266,7 @@ classdef WaypointNode
         function obj = clean_up(obj)
             %CLEAN_UP Delete any temporary files used for experiment 
             
-            if strcmp(obj.comm_mode, 'FileSharing')
+            if strcmp(obj.comm_mode, 'FileSharing') && ~strcmp(obj.cbf_mode, 'Regular')
                 delete('data.mat')
                 delete('models.mat')
             end

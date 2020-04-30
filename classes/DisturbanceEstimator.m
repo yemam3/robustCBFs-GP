@@ -109,7 +109,7 @@ classdef DisturbanceEstimator
                 % f(x)_3
                 y(:,6)                          = x_dot(:,3) - u(:,2);
                 % Add fake noise if this is a simulation
-                y = y + obj.fake_noise; % will be all 0s if is_sim =s= 0
+                y = y; %+ obj.fake_noise; % will be all 0s if is_sim =s= 0
                 % Fit Model
                 obj.gpr_models{1}               = fitrgp(x, y(:,1)); 
                 obj.gpr_models{2}               = fitrgp(x, y(:,2)); 
