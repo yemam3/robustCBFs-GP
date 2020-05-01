@@ -15,8 +15,15 @@ addpath(genpath(repo_path));
 % Initialize Experimental Details
 IS_SIM                  = 0;                            % Is this a Simulation? (if it is, we'll add some fake noise)
 COMM_MODE               = 'FileSharing';                % Inter-Node Communication Mode ('FileSharing' or 'MQTT')
+<<<<<<< Updated upstream
 CBF_MODE                = 'Multiplicative';%'Additive';             % Are 'Additive' or 'Multiplicative' Barriers Running?
 N                       = 5;                            % Number of Robots
+=======
+CBF_MODE                = 'Regular';                    % No/Additive/Multiplicative Disturbance: 'Regular', 'Additive', 'Multiplicative' 
+SAFETY_RADIUS           = 0.105;                         % How big is the safety radius between robots?
+NOMINAL_RADIUS          = 0.105;                         % How big is the circle in reality? 
+N                       = 4;                            % Number of Robots
+>>>>>>> Stashed changes
 n                       = 3;                            % Dimension of state x_i (don't change)
 m                       = 2;                            % Dimension of control u_i  (don't change)
 iterations              = 10000;                      % Select the number of iterations for the experiment.

@@ -12,8 +12,15 @@ r                       = Robotarium('NumberOfRobots', N, 'ShowFigure', true);
 if strcmp(CBF_MODE, 'Multiplicative')
     uni_barrier_certificate = create_uni_barrier_certificate_with_boundary_mult();
 elseif strcmp(CBF_MODE, 'Additive')
+<<<<<<< Updated upstream
     uni_barrier_certificate = create_uni_barrier_certificate_with_boundary_add();
 else
+=======
+    uni_barrier_certificate = create_uni_barrier_certificate_with_boundary_add('SafetyRadius', SAFETY_RADIUS);
+elseif strcmp(CBF_MODE, 'Regular')
+    uni_barrier_certificate = create_uni_barrier_certificate_with_boundary_reg('Disturbance',0,'SafetyRadius', SAFETY_RADIUS,'BarrierGain', 1000);
+else 
+>>>>>>> Stashed changes
     error('CBF_MODE needs to be either Multiplicative or Additive! Check init file.')
 end
 pose_controller         = create_minnorm_controller(); %create_minnorm_waypoint_controller();
@@ -64,7 +71,7 @@ for t = 1:iterations
     % Set velocities of agents 1,...,N
     r.set_velocities(1:N, dxu);
     % Send the previously set velocities to the agents.  This function must be called!
-    r.step();
+    r.step_no_error();
     
     %% Save old states to be used for data collection
     x_old           = x;
