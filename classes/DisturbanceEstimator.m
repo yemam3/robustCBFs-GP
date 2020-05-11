@@ -22,7 +22,6 @@ classdef DisturbanceEstimator
         num_new_data                                                    % number of new data points acquired
         % For Data Saving Purposes
         is_sim                                                          % Sim (1) or Real (0)?
-        fake_noise                                                      % Add fake noise if is_sim
     end
     
     methods
@@ -47,11 +46,6 @@ classdef DisturbanceEstimator
             obj.data                = zeros([0,2*obj.n+obj.m]);
             obj.num_new_data        = 0;
             obj.is_sim              = is_sim;
-            if is_sim
-                obj.fake_noise      = zeros([0,n*m]);
-            else
-                obj.fake_noise      = [];
-            end
         end
         
         function obj = main(obj)
@@ -86,34 +80,34 @@ classdef DisturbanceEstimator
             x_dot                           = obj.data(:,obj.n+1:2*obj.n);
             u                               = obj.data(:,2*obj.n+1:end);
             y                               = zeros(size(x_dot,1), obj.n*obj.m);
+            if obj.is_sim
+                fake_noise = 0.000;
+            end 
             if strcmp(obj.cbf_mode, 'Multiplicative')
                 obj.gpr_models                  = cell(obj.n, obj.m);
                 % g(x)_11
-                y(:,1)                          = x_dot(:,1) ./ u(:,1) - cos(x(:,3)); 
+                y(:,1)                          = x_dot(:,1) ./ u(:,1) - cos(x(:,3)) + fake_noise; 
                 % g(x)_21
-                y(:,2)                          = x_dot(:,2) ./ u(:,1) - sin(x(:,3));
+                y(:,2)                          = x_dot(:,2) ./ u(:,1) - sin(x(:,3)) + fake_noise;
                 % g(x)_32
-                y(:,6)                          = x_dot(:,3) ./ u(:,2) - 1;
-                % Add fake noise if this is a simulation
-                y = y + obj.fake_noise; % will be all 0s if is_sim =s= 0
+                y(:,6)                          = x_dot(:,3) ./ u(:,2) - 1 + fake_noise;
                 % Fit Model
                 obj.gpr_models{1,1}             = fitrgp(x, y(:,1)); 
                 obj.gpr_models{2,1}             = fitrgp(x, y(:,2)); 
-                obj.gpr_models{3,2}             = fitrgp(x, y(:,6)); 
+                obj.gpr_models{3,2}             = {fitrgp(x, sin(y(:,6))), fitrgp(x, cos(y(:,6)))}; 
             elseif strcmp(obj.cbf_mode, 'Additive')
                 obj.gpr_models                  = cell(obj.n, 1);
                 % f(x)_1
-                y(:,1)                          = x_dot(:,1) - cos(x(:,3)) .* u(:,1); 
+                y(:,1)                          = x_dot(:,1) - cos(x(:,3)) .* u(:,1) + fake_noise; 
                 % f(x)_2
-                y(:,2)                          = x_dot(:,2) - sin(x(:,3)) .* u(:,1);
+                y(:,2)                          = x_dot(:,2) - sin(x(:,3)) .* u(:,1) + fake_noise;
                 % f(x)_3
                 y(:,6)                          = x_dot(:,3) - u(:,2);
-                % Add fake noise if this is a simulation
-                y = y; %+ obj.fake_noise; % will be all 0s if is_sim =s= 0
+                y(:,6)                          = atan2(sin(y(:,6)), cos(y(:,6))) + fake_noise;
                 % Fit Model
                 obj.gpr_models{1}               = fitrgp(x, y(:,1)); 
                 obj.gpr_models{2}               = fitrgp(x, y(:,2)); 
-                obj.gpr_models{3}               = fitrgp(x, y(:,6)); 
+                obj.gpr_models{3}               = {fitrgp(x, sin(y(:,6))), fitrgp(x, cos(y(:,6)))};
             else
                 error('cbf_mode needs to be either Additive or Multiplicative! Check init file.')
             end
@@ -157,7 +151,6 @@ classdef DisturbanceEstimator
             end
             obj.data(end+1:end+size(new_data,1),:)  = new_data;        % Append new data to stored data
             % Add Fake Disturbance if this is a simulation
-            obj.fake_noise = cat(1, obj.fake_noise, normrnd(0,0.05*obj.is_sim,[size(new_data,1),obj.n*obj.m]));
             obj.num_new_data = obj.num_new_data + size(new_data,1);    % count how much new data we've gathered so far
         end
     end

@@ -33,7 +33,7 @@ for t = 1:iterations
     % Retrieve the most recent poses from the Robotarium (dt = 0.033)
     x               = r.get_poses(); 
     if IS_SIM 
-        x               = x + 0.0005*(randn(size(x)));
+        x               = x;
     end
     
     %% Compute Waypoints
@@ -49,7 +49,7 @@ for t = 1:iterations
             sigmas_         = reshape(sigmas_',[n,m,N]);
             [dxu, min_h]    = uni_barrier_certificate(dxu, x, [], mus_ - 2*sigmas_, mus_ + 2*sigmas_); 
         else
-            [dxu, min_h]    = uni_barrier_certificate(dxu, x, [], -0.1*ones([n,m,N]), 0.1*ones([n,m,N]));
+            [dxu, min_h]    = uni_barrier_certificate(dxu, x, [], -0.01*ones([n,m,N]), 0.01*ones([n,m,N]));
         end
     elseif strcmp(CBF_MODE, 'Additive')
         if ~isempty(waypoint_node.gpr_models)
@@ -94,5 +94,6 @@ r.debug();
 save(['saved_data/robotarium_', CBF_MODE, '_', num2str(SAFETY_RADIUS*100), '_', date_string,'.mat'], 'waypoint_node', 'x_data', 'u_data', 'min_h_data');
 figure(1001);hold on;grid on;
 xlabel('iter'); ylabel('min_{ij}(h_ij(t))');
-plot(1:iterations,min_h_data,'b'); 
-plot(1:iterations,zeros(1,iterations),'r')
+plot(1:iterations,min_h_data, 'LineWidth', 4); 
+plot(1:iterations,zeros(1,iterations),'r', 'LineWidth', 4)
+ylim([-0.1,0.6])

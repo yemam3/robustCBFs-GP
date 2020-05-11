@@ -227,9 +227,16 @@ classdef WaypointNode
             for i = 1:size(obj.gpr_models,1)
                 for j = 1:size(obj.gpr_models,2)
                     if ~isempty(obj.gpr_models{i,j})
-                        [mus_, sigmas_]             = obj.gpr_models{i,j}.predict(x);
-                        mus(:,(j-1)*obj.n+i)        = mus_;
-                        sigmas(:,(j-1)*obj.n+i)     = sigmas_;
+                        if iscell(obj.gpr_models{i,j}) % Deal with angles
+                            [mus1_, sigmas1_]             = obj.gpr_models{i,j}{1}.predict(x); % sin of angle
+                            [mus2_, sigmas2_]             = obj.gpr_models{i,j}{2}.predict(x); % cos of angle
+                            mus_                          = atan2(mus1_, mus2_);
+                            sigmas_                       = max(sigmas1_, sigmas2_); 
+                        else
+                            [mus_, sigmas_]             = obj.gpr_models{i,j}.predict(x);
+                        end
+                            mus(:,(j-1)*obj.n+i)        = mus_;
+                            sigmas(:,(j-1)*obj.n+i)     = sigmas_;
                     end
                 end
             end
