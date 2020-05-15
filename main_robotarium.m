@@ -21,9 +21,11 @@ end
 pose_controller         = create_minnorm_controller(); %create_minnorm_waypoint_controller();
 % Disturbance Estimator
 waypoint_node           = WaypointNode(N,n,m,CBF_MODE,COMM_MODE,IP,PORT);
+% Data saving 
 x_old                   = []; 
 x_data                  = zeros(3,N,0); 
 u_data                  = zeros(2,N,0);
+u_nom_data              = zeros(2,N,0);
 t_data                  = [];
 min_h_data              = [];
 t_stamp                 = tic;
@@ -32,15 +34,13 @@ t_stamp                 = tic;
 for t = 1:iterations
     % Retrieve the most recent poses from the Robotarium (dt = 0.033)
     x               = r.get_poses(); 
-    if IS_SIM 
-        x               = x;
-    end
-    
+
     %% Compute Waypoints
     % Generate Waypoints (check if reached and updates)
     waypoint_node   = waypoint_node.waypoint_step(x);
     % Generate Robot inputs
     dxu             = pose_controller(x, waypoint_node.waypoints);
+    dxu_nom         = dxu; % For saving purposes
     % Collision Avoidance
     if strcmp(CBF_MODE, 'Multiplicative')
         if ~isempty(waypoint_node.gpr_models)
@@ -66,6 +66,8 @@ for t = 1:iterations
     %% Append Data to be saved for GP and save trajectory data
     if mod(t,10) == 0
         waypoint_node = waypoint_node.append_traj_data(x, dxu, x_old, dxu_old);
+    end
+    if mod(t,50) == 0
         plot(x(1,:), x(2,:), 'bo', 'MarkerSize', 30, 'LineWidth', 5);
     end
     %% Send velocities to agents
@@ -80,10 +82,11 @@ for t = 1:iterations
     x_data          = cat(3,x_data, x);
     u_data          = cat(3,u_data, dxu);
     t_data          = toc(t_stamp);
+    u_nom_data    = cat(3, u_nom_data, dxu_nom);
     min_h_data      = cat(1,min_h_data,min_h - NOMINAL_RADIUS^2);
     % Save Data
     if mod(t,300) == 0
-        save(['saved_data/robotarium_', CBF_MODE, '_', num2str(SAFETY_RADIUS*100), '_', date_string,'.mat'], 'waypoint_node', 'x_data', 'u_data', 'min_h_data');
+        save(['saved_data/robotarium_', CBF_MODE, '_', num2str(SAFETY_RADIUS*100), '_', date_string,'.mat'], 'waypoint_node', 'x_data', 'u_data', 'u_nom_data', 'min_h_data');
     end
 end
 
@@ -91,9 +94,13 @@ waypoint_node.plot_sigmas();
 waypoint_node.clean_up();
 % We should call r.call_at_scripts_end() after our experiment is over!
 r.debug();
-save(['saved_data/robotarium_', CBF_MODE, '_', num2str(SAFETY_RADIUS*100), '_', date_string,'.mat'], 'waypoint_node', 'x_data', 'u_data', 'min_h_data');
+save(['saved_data/robotarium_', CBF_MODE, '_', num2str(SAFETY_RADIUS*100), '_', date_string,'.mat'], 'waypoint_node', 'x_data', 'u_data', 'u_nom_data', 'min_h_data');
+
+% Plot min h_ij over time
 figure(1001);hold on;grid on;
-xlabel('iter'); ylabel('min_{ij}(h_ij(t))');
 plot(1:iterations,min_h_data, 'LineWidth', 4); 
 plot(1:iterations,zeros(1,iterations),'r', 'LineWidth', 4)
 ylim([-0.1,0.6])
+ax = gca;
+ax.FontSize = 40;
+xlabel('iter', 'FontSize', 50); ylabel('min_{ij}(h_ij(t))', 'FontSize', 50);
