@@ -218,11 +218,30 @@ classdef WaypointNode
             %  where each mus_ij is a column vector of size -1 (num_data)
             
             assert(size(x,2) == obj.n, 'Columns of x must be of the size of the state x_i');
-            assert(~isempty(obj.gpr_models), 'No GP models obtained to predict from!');
+            
             
             % Initialize empty mus and sigmas
             mus    = zeros(size(x,1), numel(obj.gpr_models));
             sigmas = zeros(size(x,1), numel(obj.gpr_models));
+            
+            
+            if strcmp(obj.cbf_mode, 'Regular') % Regular barriers assume no disturbance
+                mus    = [];
+                sigmas = [];
+                return
+            elseif isempty(obj.gpr_models) % If is empty just return prior 
+                if strcmp(obj.cbf_mode, 'Multiplicative')
+                    s      = obj.N * obj.m;
+                    sig    = 0.005;
+                elseif strcmp(obj.cbf_mode, 'Additive')
+                    s      = obj.N;
+                    sig    = 0.005;
+                end
+                mus    = zeros(obj.n, s);
+                sigmas = sig * ones(obj.n, s);
+                return
+            end
+            
             % Compute mus and sigmas for each one of the gps
             for i = 1:size(obj.gpr_models,1)
                 for j = 1:size(obj.gpr_models,2)
@@ -245,6 +264,10 @@ classdef WaypointNode
         function plot_sigmas(obj)
             %PLOT_SIGMAS plots sigmas (variance) of the disturbance
             %estimation over time. 
+            
+            if isempty(obj.gpr_models)
+                return
+            end
             
             % Add Colors so that they're constant through different plots
             colors = ['b','g','r','c','m','y','k','w']; % TODO: Add Colors 

@@ -1,5 +1,5 @@
 function [ uni_barrier_certificate ] = create_uni_barrier_certificate_with_boundary_reg(varargin)
-% CREATE_SI_BARRIER_CERTIFICATE Creates a unicycle barrier
+% CREATE_SI_BARRIER_CERTIFICATE_REG Creates a unicycle barrier
 % certificate function to avoid collisions.
 %
 %   Args:

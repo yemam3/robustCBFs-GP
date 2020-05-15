@@ -9,9 +9,9 @@ repo_path = fileparts(mfilename('fullpath'));
 addpath(genpath(repo_path));
 
 % Initialize Experimental Details
-IS_SIM                  = 1;                            % Is this a Simulation? (if it is, we'll add some fake noise)
+IS_SIM                  = 0;                            % Is this a Simulation? (if it is, we'll add some fake noise)
 COMM_MODE               = 'FileSharing';                % Inter-Node Communication Mode ('FileSharing' or 'MQTT')
-CBF_MODE                = 'Regular';                    % No/Additive/Multiplicative Disturbance: 'Regular', 'Additive', 'Multiplicative' 
+CBF_MODE                = 'Multiplicative';                    % No/Additive/Multiplicative Disturbance: 'Regular', 'Additive', 'Multiplicative' 
 SAFETY_RADIUS           = 0.105;                        % How big is the safety radius between robots?
 NOMINAL_RADIUS          = 0.100;                        % How big is the circle in reality? 
 N                       = 4;                            % Number of Robots
@@ -22,7 +22,9 @@ date_string = datestr(datetime('now'),'HH:MM:SS.FFF');  % For Data Saving Purpos
 % Define IP & Port to be used 
 IP                      = 'localhost';                  % Robotarium: '192.168.1.8' Local: 'localhost'
 PORT                    = 1883;                         % Robotarium: 1884          Local: 1883
-
+% Data Saving Path
+SAVE_PATH               = ['saved_data/robotarium_', CBF_MODE, '_', num2str(SAFETY_RADIUS*100), '_', date_string, '/'];
+mkdir(SAVE_PATH);
 % Suppress is not serializable warning (caused when saving data)
 warning('off', 'MATLAB:Java:ConvertFromOpaque');
 
