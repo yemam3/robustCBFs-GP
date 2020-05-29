@@ -62,6 +62,7 @@ for t = 1:iterations
     %% Append Data to be saved for GP and save trajectory data
     if mod(t,10) == 0
         waypoint_node = waypoint_node.append_traj_data(x, dxu, data_saver.x_old, data_saver.dxu_old);
+        waypoint_node = waypoint_node.waypoint_step(x);
     end
     if mod(t,50) == 0
         plot(x(1,:), x(2,:), 'bo', 'MarkerSize', 30, 'LineWidth', 5);

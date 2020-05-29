@@ -21,7 +21,7 @@ classdef CBFwrapper
             obj.safety_radius = safety_radius; 
             % Intialize Barriers and Safety Functions
             if strcmp(cbf_mode, 'Multiplicative')
-                obj.cbf_handle = create_uni_barrier_certificate_with_boundary_mult('SafetyRadius', safety_radius);
+                obj.cbf_handle = create_uni_barrier_certmificate_with_boundary_mult('SafetyRadius', safety_radius);
             elseif strcmp(cbf_mode, 'Additive')
                 obj.cbf_handle = create_uni_barrier_certificate_with_boundary_add('SafetyRadius', safety_radius);
             elseif strcmp(cbf_mode, 'Regular')
@@ -40,7 +40,10 @@ classdef CBFwrapper
             if strcmp(obj.cbf_mode, 'Multiplicative')
                 mus_            = reshape(mus_',[obj.n,obj.m,obj.N]);
                 sigmas_         = reshape(sigmas_',[obj.n,obj.m,obj.N]);
-                [dxu, min_h]    = obj.cbf_handle(dxu, x, obstacles, mus_ - kd*sigmas_, mus_ + kd*sigmas_);
+                sigmas_(1,1,:)  = kd*sigmas_(1,1,:);
+                sigmas_(2,1,:)  = kd*sigmas_(2,1,:);
+                sigmas_(3,2,:)  = 0*sigmas_(3,2,:);
+                [dxu, min_h]    = obj.cbf_handle(dxu, x, obstacles, mus_ - sigmas_, mus_ + sigmas_);
             elseif strcmp(obj.cbf_mode, 'Additive')
                 mus_            = reshape(mus_',[obj.n,obj.N]);
                 sigmas_         = reshape(sigmas_',[obj.n,obj.N]);

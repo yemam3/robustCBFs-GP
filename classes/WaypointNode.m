@@ -231,14 +231,14 @@ classdef WaypointNode
                 return
             elseif isempty(obj.gpr_models) % If is empty just return prior 
                 if strcmp(obj.cbf_mode, 'Multiplicative')
-                    s      = obj.N * obj.m;
+                    s      = obj.n * obj.m;
                     sig    = 0.005;
                 elseif strcmp(obj.cbf_mode, 'Additive')
-                    s      = obj.N;
+                    s      = obj.n;
                     sig    = 0.005;
                 end
-                mus    = zeros(obj.n, s);
-                sigmas = sig * ones(obj.n, s);
+                mus    = zeros(size(x,1), s);
+                sigmas = sig * ones(size(x,1), s);
                 return
             end
             

@@ -31,6 +31,7 @@ for t = 1:iterations
     %% Collision Avoidance
     [mus_, sigmas_] = waypoint_node.predict(x');
     [dxu, min_h] = cbf_wrapper.uni_barrier_certificate(dxu, x, [], mus_, sigmas_);
+    %% Add Multiplicative Disturbance
     %% Append Data to be saved for GP and save trajectory data
     if mod(t,10) == 0
         waypoint_node = waypoint_node.append_traj_data(x, dxu, data_saver.x_old, data_saver.dxu_old);
