@@ -31,7 +31,7 @@ function [ uni_barrier_certificate ] = create_uni_barrier_certificate_with_bound
 %       size of the robots.
 
     parser = inputParser;
-    addOptional(parser, 'BarrierGain', 1000);
+    addOptional(parser, 'BarrierGain', 500);
     addOptional(parser, 'SafetyRadius', 0.12);
     addOptional(parser, 'ProjectionDistance', 0.03);
     addOptional(parser, 'BaseLength', 0.105);

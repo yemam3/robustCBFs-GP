@@ -11,11 +11,11 @@ init;
 
 %% Initialize 
 r                       = Robotarium('NumberOfRobots', N, 'ShowFigure', true); % Get Robotarium object used to communicate with the robots/simulator
-cbf_wrapper             = CBFwrapper(N, n, m, CBF_MODE, SAFETY_RADIUS);
+cbf_wrapper             = CBFwrapper(N, n, m, CBF_SPECS);
 position_control        = create_si_position_controller();
 si_to_uni_dyn           = create_si_to_uni_dynamics();
-waypoint_node           = WaypointNode(N,n,m,CBF_MODE,COMM_MODE,IP,PORT);      % Disturbance Estimator
-data_saver              = DataSaver(N,NOMINAL_RADIUS);                         % Data saving 
+waypoint_node           = WaypointNode(N,n,m,CBF_SPECS.cbf_mode,COMM_MODE,IP,PORT);      % Disturbance Estimator
+data_saver              = DataSaver(N,CBF_SPECS.nominal_radius);                         % Data saving 
 t_stamp                 = tic;
 
 
@@ -33,6 +33,11 @@ flag = 0; %flag of task completion
 for t = 1:iterations
     % Retrieve the most recent poses from the Robotarium (dt = 0.033)
     x               = r.get_poses(); 
+    if IS_SIM
+        Os(1,:) = cos(x(3, :)); 
+        Os(2,:) = sin(x(3, :));
+        x(1:2, :) = x(1:2, :) - CBF_SPECS.projection_distance * Os;
+    end
     % Generate Robot inputs
     x_temp = x(1:2,:);
     %% Algorithm
