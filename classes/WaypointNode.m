@@ -79,15 +79,15 @@ classdef WaypointNode
             if isempty(obj.waypoints)
                 ids                 = boolean(ones([1,obj.N]));
             else
-                ids1                = sum((x(1:2,:) - obj.waypoints(1:2,:)).^2, 1) < 0.15;
-                theta_diff          = (x(3,:) - obj.waypoints(3,:));
-                ids2                = abs(atan2(sin(theta_diff), cos(theta_diff))) < pi/4;
-                ids                 = (ids1 & ids2);
+                ids                = sum((x(1:2,:) - obj.waypoints(1:2,:)).^2, 1) < 0.15;
+                %theta_diff          = (x(3,:) - obj.waypoints(3,:));
+                %ids2                = abs(atan2(sin(theta_diff), cos(theta_diff))) < pi/4;
+                %ids                 = (ids1 & ids2);
             end
-            obj.waypoints(:,ids)    = obj.gen_next_waypoint(x, ids);
+            obj    = obj.gen_next_waypoint(x, ids);
         end
         
-        function p = gen_next_waypoint(obj, x, ids)
+        function obj = gen_next_waypoint(obj, x, ids)
             %GEN_NEXT_WAYPOINT Generates next waypoints for each robot.
             %   Inputs:
             %       x: 3xN matrix containing state of robots
@@ -101,6 +101,7 @@ classdef WaypointNode
             max_iter                = 50;       % Number of iterations we try to make sure new point is far away
             N_free                  = sum(ids);
             p                       = zeros([3,N_free]);
+            ids                     = find(ids);
             
             for i = 1:N_free
                 iter                = 1;
@@ -116,6 +117,7 @@ classdef WaypointNode
                         p(:,i)                      = obj.waypoint_queue(1, 1:obj.n)';
                         obj.waypoint_queue(1,:)     = [];
                     end
+                    obj.waypoints(:,ids(i))         = p(:,i);
                     iter = iter + 1;
                 end
             end
@@ -138,6 +140,7 @@ classdef WaypointNode
             new_data                                = [x_old(:,ids); x_dot; u]';        % new data shape: x x_dot u
             % Delete data with small u
             del_inds = (abs(u(1,:)) < 0.05) | (abs(u(2,:)) < 0.1);
+            del_inds = del_inds | (abs(x_dot(3,:)) < 0.1) | (abs(x_dot(3,:)) > 1.5);
             new_data(del_inds,:)      = [];                                             % Prune data with 0 u
             obj.data(end+1:end+size(new_data,1),:)  = new_data;
             

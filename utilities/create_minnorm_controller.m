@@ -17,7 +17,7 @@ function [ parking_controller ] = create_minnorm_controller(varargin)
     p = inputParser;
     addOptional(p, 'ApproachAngleGain', 0.8);
     addOptional(p, 'DesiredAngleGain', 0.7); 
-    addOptional(p, 'RotationErrorGain', 0.8);
+    addOptional(p, 'RotationErrorGain', 0.5);
     addOptional(p, 'MinNorm', 0.05);
     parse(p, varargin{:});
     
@@ -73,7 +73,7 @@ function [ parking_controller ] = create_minnorm_controller(varargin)
 %         dxu(1,abs(dxu(1,:))<v_min) = sign(dxu(1,abs(dxu(1,:))<v_min)) * v_min;  
 %         omega_min = 0.3;
 %         dxu(2,abs(dxu(2,:))<omega_min) = sign(dxu(2,abs(dxu(2,:))<omega_min)) * omega_min;    
-        
+          dxu(1,abs(dxu(1,:))>0.15) = sign(dxu(1,abs(dxu(1,:))>0.15)) * 0.15;
     end
 end
 
