@@ -15,10 +15,10 @@
 function [ parking_controller ] = create_minnorm_controller(varargin)
 
     p = inputParser;
-    addOptional(p, 'ApproachAngleGain', 0.8);
-    addOptional(p, 'DesiredAngleGain', 0.7); 
-    addOptional(p, 'RotationErrorGain', 0.8);
-    addOptional(p, 'MinNorm', 0.00);
+    addOptional(p, 'ApproachAngleGain', 0.5);
+    addOptional(p, 'DesiredAngleGain', 0.5); 
+    addOptional(p, 'RotationErrorGain', 0.5);
+    addOptional(p, 'MinNorm', 0.05);
     parse(p, varargin{:});
     
     gamma = p.Results.ApproachAngleGain; 
@@ -47,16 +47,17 @@ function [ parking_controller ] = create_minnorm_controller(varargin)
 
         for i = 1:N_states
 
-            translate = R(-poses(3, i))*(poses(1:2, i) - states(1:2, i));
+            translate = R(-poses(3, i))*(poses(1:2, i) - states(1:2, i));                
             e = norm(translate);
             theta = atan2(translate(2), translate(1));
             alpha = theta - (states(3, i) - poses(3, i));
             alpha = atan2(sin(alpha), cos(alpha));
 
-            ca = cos(alpha);
+            ca = cos(alpha); % Restricting Linear velocity to only forward (add abs here)
             sa = sin(alpha);
 
-            dxu(1, i) = gamma * 0.5 * e * abs(ca);
+            dxu(1, i) = gamma * e * ca;
+            dxu(1,i) = sign(dxu(1,i)) * min(abs(dxu(1,i)), 0.1);
             dxu(2, i) = k*alpha + gamma*((ca*sa)/alpha)*(alpha + h*theta);        
         end
         

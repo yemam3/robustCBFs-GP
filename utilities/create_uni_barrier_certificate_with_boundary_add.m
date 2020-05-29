@@ -31,7 +31,7 @@ function [ uni_barrier_certificate ] = create_uni_barrier_certificate_with_bound
 %       size of the robots.
 
     parser = inputParser;
-    addOptional(parser, 'BarrierGain', 150);
+    addOptional(parser, 'BarrierGain', 500);
     addOptional(parser, 'SafetyRadius', 0.12);
     addOptional(parser, 'ProjectionDistance', 0.03);
     addOptional(parser, 'BaseLength', 0.105);
@@ -115,13 +115,20 @@ function [ uni_barrier_certificate ] = create_uni_barrier_certificate_with_bound
         Ms(1,2:2:2*num_robots) = -projection_distance*Os(2,1:num_robots);
         Ms(2,2:2:2*num_robots) = projection_distance*Os(1,1:num_robots);
         Ms(2,1:2:2*num_robots) = Os(2,1:num_robots);
-        ret = zeros(1, temp);
+        ret = 10;
         
         % Sum the convex hulls for p_dot (check transformation)
         psi_1(4,:) = projection_distance * cos(x(3, :)) .* psi_1(3,:);
         psi_1(3,:) = -projection_distance * sin(x(3, :)) .* psi_1(3,:);
         psi_2(4,:) = projection_distance * cos(x(3, :)) .* psi_2(3,:);
         psi_2(3,:) = -projection_distance * sin(x(3, :)) .* psi_2(3,:);
+        
+        % Assuming the tracking returns us p_x and p_y, not x and y, then
+        % the disturbance we are measuring is on p and there is no need
+        % to add the theta disturbance that appears due to the
+        % transformation. So basically, if the disturbance coming in is on
+        % xytheta, then don't comment out the min max, if on p_xp_y, do
+        % comment it out.
         disturb_1 = psi_1(1:2,:) + min(psi_1(3:4,:),psi_2(3:4,:)); % 2xN
         disturb_2 = psi_2(1:2,:) + max(psi_1(3:4,:),psi_2(3:4,:)); % 2xN
         
@@ -130,14 +137,15 @@ function [ uni_barrier_certificate ] = create_uni_barrier_certificate_with_bound
         for i = 1:(num_robots-1)
             for j = (i+1):num_robots
                 diff = ps(:, i) - ps(:, j);
+                if sum(diff.^2,1) < ret
+                    ret = sum(diff.^2,1);
+                end
                 hs = sum(diff.^2,1) - safety_radius^2;
                 h_dot_i = 2*(diff)'*Ms(:,2*i-1:2*i);
                 h_dot_j = -2*(diff)'*Ms(:,2*j-1:2*j);                
                 A(count, (2*i-1):(2*i)) = h_dot_i*D;
                 A(count, (2*j-1):(2*j)) = h_dot_j*D;
-                b(count) = -gamma*hs.^3 - min(h_dot_i*disturb_1(:,i), h_dot_i*disturb_2(:,i)) - min(h_dot_j*disturb_1(:,j), h_dot_j*disturb_2(:,j));  
-                ret(count) = hs;
-                
+                b(count) = -gamma*hs.^3 - min(h_dot_i*disturb_1(:,i), h_dot_i*disturb_2(:,i)) - min(h_dot_j*disturb_1(:,j), h_dot_j*disturb_2(:,j));                  
                 count = count + 1;
             end
         end
@@ -194,7 +202,6 @@ function [ uni_barrier_certificate ] = create_uni_barrier_certificate_with_bound
             dxu = reshape(vnew, 2, num_robots);
             dxu = D*dxu;
         end
-        
     end
 end
 

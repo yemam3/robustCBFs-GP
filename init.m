@@ -1,37 +1,32 @@
 clc
 clear
 close all
+%clear java
+%rng(10) % Fix Random Seed
 
-<<<<<<< Updated upstream
-% Changes Current Directory to Source and adds necessary files
-ParentFolderPath = fileparts(mfilename('fullpath')); % path to icra_simulations
-addpath(genpath('mqtt_mode'));
-addpath(genpath('/Users/yousefemam/Google Drive/robotarium_matlab'));
-=======
 % Changes Current Directory to src and recursively add children
 repo_path = fileparts(mfilename('fullpath')); 
 addpath(genpath(repo_path));
 
 % Initialize Experimental Details
-IS_SIM                  = 0;                            % Is this a Simulation? (if it is, we'll add some fake noise)
-COMM_MODE               = 'FileSharing';                % Inter-Node Communication Mode ('FileSharing' or 'MQTT')
-<<<<<<< Updated upstream
-CBF_MODE                = 'Multiplicative';%'Additive';             % Are 'Additive' or 'Multiplicative' Barriers Running?
-N                       = 5;                            % Number of Robots
-=======
-CBF_MODE                = 'Regular';                    % No/Additive/Multiplicative Disturbance: 'Regular', 'Additive', 'Multiplicative' 
-SAFETY_RADIUS           = 0.105;                         % How big is the safety radius between robots?
-NOMINAL_RADIUS          = 0.105;                         % How big is the circle in reality? 
-N                       = 4;                            % Number of Robots
->>>>>>> Stashed changes
-n                       = 3;                            % Dimension of state x_i (don't change)
-m                       = 2;                            % Dimension of control u_i  (don't change)
-iterations              = 10000;                      % Select the number of iterations for the experiment.
+IS_SIM                          = 0;                            % Is this a Simulation? (if it is, we'll add some fake noise)
+COMM_MODE                       = 'FileSharing';                % Inter-Node Communication Mode ('FileSharing' or 'MQTT')
+CBF_SPECS.cbf_mode              = 'Multiplicative';                    % No/Additive/Multiplicative Disturbance: 'Regular', 'Additive', 'Multiplicative' 
+CBF_SPECS.safety_radius         = 0.110;                        % How big is the safety radius between robots?
+CBF_SPECS.nominal_radius        = 0.110;                        % How big is the circle in reality? 
+CBF_SPECS.barrier_gain          = 200;
+CBF_SPECS.projection_distance   = 0.03;
+N                               = 4;                            % Number of Robots
+n                               = 3;                            % Dimension of state x_i (don't change)
+m                               = 2;                            % Dimension of control u_i  (don't change)
+iterations                      = 10000/2;                      % Select the number of iterations for the experiment.
 date_string = datestr(datetime('now'),'HH:MM:SS.FFF');  % For Data Saving Purposes
 % Define IP & Port to be used 
-IP                      = 'localhost';                  % Robotarium: '192.168.1.8' Local: 'localhost'
-PORT                    = 1883;                         % Robotarium: 1884          Local: 1883
-
+IP                              = 'localhost';                  % Robotarium: '192.168.1.8' Local: 'localhost'
+PORT                            = 1883;                         % Robotarium: 1884          Local: 1883
+% Data Saving Path
+SAVE_PATH                       = ['saved_data/robotarium_', CBF_SPECS.cbf_mode, '_', num2str(CBF_SPECS.safety_radius*100), '_', date_string, '/'];
+mkdir(SAVE_PATH);
 % Suppress is not serializable warning (caused when saving data)
 warning('off', 'MATLAB:Java:ConvertFromOpaque');
 
@@ -49,4 +44,3 @@ if strcmp(COMM_MODE, 'MQTT')
         javaaddpath('/home/user_code/mqtt_matlab_interface/jars/iMqttClient.jar');
     end
 end
->>>>>>> Stashed changes

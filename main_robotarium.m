@@ -2,91 +2,64 @@
 % Yousef Emam
 % 21/03/2020
 % Main Robotarium Script.
+%
+% This experiment involves robots that estimate the disturbance online, and
+% efficiently sample the environment by visiting the points in the state
+% space with the highest variance estimate. 
 
 % Initialization File
 init;  
 
-%% Get Robotarium object used to communicate with the robots/simulator
-r                       = Robotarium('NumberOfRobots', N, 'ShowFigure', true);
-% Intialize Controllers and Safety Functions
-if strcmp(CBF_MODE, 'Multiplicative')
-    uni_barrier_certificate = create_uni_barrier_certificate_with_boundary_mult();
-elseif strcmp(CBF_MODE, 'Additive')
-<<<<<<< Updated upstream
-    uni_barrier_certificate = create_uni_barrier_certificate_with_boundary_add();
-else
-=======
-    uni_barrier_certificate = create_uni_barrier_certificate_with_boundary_add('SafetyRadius', SAFETY_RADIUS);
-elseif strcmp(CBF_MODE, 'Regular')
-    uni_barrier_certificate = create_uni_barrier_certificate_with_boundary_reg('Disturbance',0,'SafetyRadius', SAFETY_RADIUS,'BarrierGain', 1000);
-else 
->>>>>>> Stashed changes
-    error('CBF_MODE needs to be either Multiplicative or Additive! Check init file.')
-end
-pose_controller         = create_minnorm_controller(); %create_minnorm_waypoint_controller();
-% Disturbance Estimator
-waypoint_node           = WaypointNode(N,n,m,CBF_MODE,COMM_MODE,IP,PORT);
-x_old                   = []; 
-x_data                  = zeros(3,N,0); 
-u_data                  = zeros(2,N,0);
-t_data                  = [];
+%% Initialize 
+r                       = Robotarium('NumberOfRobots', N, 'ShowFigure', true); % Get Robotarium object used to communicate with the robots/simulator
+cbf_wrapper             = CBFwrapper(N, n, m, CBF_SPECS);
+pose_controller         = create_minnorm_controller(); 
+waypoint_node           = WaypointNode(N,n,m,CBF_SPECS.cbf_mode,COMM_MODE,IP,PORT);      % Disturbance Estimator
+data_saver              = DataSaver(N, CBF_SPECS.nominal_radius);                         % Data saving 
 t_stamp                 = tic;
 
 % Main Loop
 for t = 1:iterations
     % Retrieve the most recent poses from the Robotarium (dt = 0.033)
-    x               = r.get_poses();
-    
-    %% Compute Waypoints
+    x               = r.get_poses(); 
+    if IS_SIM
+        Os(1,:) = cos(x(3, :)); 
+        Os(2,:) = sin(x(3, :));
+        x(1:2, :) = x(1:2, :) - CBF_SPECS.projection_distance * Os;
+    end
     % Generate Waypoints (check if reached and updates)
     waypoint_node   = waypoint_node.waypoint_step(x);
     % Generate Robot inputs
     dxu             = pose_controller(x, waypoint_node.waypoints);
-    % Collision Avoidance
-    if strcmp(CBF_MODE, 'Multiplicative')
-        if ~isempty(waypoint_node.gpr_models)
-            [mus_, sigmas_] = waypoint_node.predict(x');
-            mus_            = reshape(mus_',[n,m,N]);
-            sigmas_         = reshape(sigmas_',[n,m,N]);
-            dxu             = uni_barrier_certificate(dxu, x, [], 0 - 2*sigmas_, 0 + 2*sigmas_);
-        else
-            dxu             = uni_barrier_certificate(dxu, x, [], -0.01*ones([n,m,N]), 0.01*ones([n,m,N]));
-        end
-    elseif strcmp(CBF_MODE, 'Additive')
-        if ~isempty(waypoint_node.gpr_models)
-            [mus_, sigmas_] = waypoint_node.predict(x');
-            mus_            = reshape(mus_',[n,N]);
-            sigmas_         = reshape(sigmas_',[n,N]);
-            dxu             = uni_barrier_certificate(dxu, x, [], 0 - 2*sigmas_, 0 + 2*sigmas_); % TODO: instead of 0s should have mus_
-        else
-            dxu             = uni_barrier_certificate(dxu, x, [], -0.01*ones([n,N]), 0.01*ones([n,N]));
-        end
-    end
+    dxu_nom         = dxu; % For saving purposes
+    %% Collision Avoidance
+    [mus_, sigmas_] = waypoint_node.predict(x');
+    [dxu, min_h] = cbf_wrapper.uni_barrier_certificate(dxu, x, [], mus_, sigmas_);
     %% Append Data to be saved for GP and save trajectory data
-    if mod(t,10) == 0
-        waypoint_node = waypoint_node.append_traj_data(x, dxu, x_old, dxu_old);
+    if mod(t,5) == 0
+        waypoint_node = waypoint_node.append_traj_data(x, dxu, data_saver.x_old, data_saver.dxu_old);
+    end
+    if mod(t,50) == 0
         plot(x(1,:), x(2,:), 'bo', 'MarkerSize', 30, 'LineWidth', 5);
+    end
+    %% Save old states to be used for data collection
+    data_saver      = data_saver.save(x, dxu, toc(t_stamp), dxu_nom, min_h);
+    % Save Data
+    if mod(t,300) == 0
+        save([SAVE_PATH, 'robotarium_data.mat'], 'waypoint_node', 'data_saver', 'cbf_wrapper');
     end
     %% Send velocities to agents
     % Set velocities of agents 1,...,N
     r.set_velocities(1:N, dxu);
     % Send the previously set velocities to the agents.  This function must be called!
-    r.step_no_error();
-    
-    %% Save old states to be used for data collection
-    x_old           = x;
-    dxu_old         = dxu;
-    x_data          = cat(3,x_data, x);
-    u_data          = cat(3,u_data, dxu);
-    t_data          = toc(t_stamp);
-    % Save Data
-    if mod(t,300) == 0
-        save(['saved_data/main_mqtt_workspace_', CBF_MODE, '_', date_string,'.mat'], 'waypoint_node', 'x_data', 'u_data', 't_data');
-    end
+    r.step();
 end
 
 waypoint_node.plot_sigmas();
 waypoint_node.clean_up();
 % We should call r.call_at_scripts_end() after our experiment is over!
 r.debug();
-save(['saved_data/main_mqtt_workspace_', CBF_MODE, '_', date_string,'.mat'], 'waypoint_node', 'x_data', 'u_data');
+save([SAVE_PATH, 'robotarium_data.mat'], 'waypoint_node', 'data_saver', 'cbf_wrapper');
+data_saver.plot_min_h(SAVE_PATH);
+data_saver.plot_u_diff(SAVE_PATH);
+
