@@ -7,7 +7,7 @@
 % switch positions.
 
 % Initialization File
-init;  
+init; mkdir(SAVE_PATH);  
 
 %% Initialize 
 r                       = Robotarium('NumberOfRobots', N, 'ShowFigure', true); % Get Robotarium object used to communicate with the robots/simulator
@@ -28,7 +28,7 @@ p_theta = (1:2:2*N)/(2*N)*2*pi;
 p_circ = [xybound(2)*cos(p_theta) xybound(2)*cos(p_theta+pi); xybound(4)*sin(p_theta)  xybound(4)*sin(p_theta+pi)];
 x_goal = p_circ(:,1:N);
 flag = 0; %flag of task completion
-
+waypoint_node = waypoint_node.update_models();
 %% Main Loop
 for t = 1:iterations
     % Retrieve the most recent poses from the Robotarium (dt = 0.033)

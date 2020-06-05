@@ -211,6 +211,9 @@ classdef WaypointNode
             [~, inds]                   = sort(-obj.uncertainty_grid(:,4));
             obj.waypoint_queue          = obj.uncertainty_grid(inds, :);
             % Remove Points the robots are currently going to
+            if isempty(obj.waypoints)
+               return; 
+            end
             for i = 1:obj.N
                obj.waypoint_queue(all(obj.waypoint_queue(:,1:3) == obj.waypoints(:,i)',2),:) = [];
             end
