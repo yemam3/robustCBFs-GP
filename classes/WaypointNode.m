@@ -7,7 +7,7 @@ classdef WaypointNode
         % Transformation Matrix from Differential Drive to Unicycle
         pub_topic           = 'data';                       % Topic to publish to on MQTT
         sub_topic           = 'models';                     % Topic to subscribe to on MQTT
-        bds                 = [-1.2, 1.2, -0.7, 0.7];       % Robotarium Bounds  
+        bds                 = [-1.4, 1.4, -0.8, 0.8];       % Robotarium Bounds  
         dt                  = 0.033;                        % Robotarium Timestep
         granularity         = 0.25;                         % granularity of heatmap
     end
@@ -49,11 +49,7 @@ classdef WaypointNode
             obj.waypoints           = [];       
             obj.waypoint_queue      = [];
             % Intiailize Coordinates for uncertainty grid
-<<<<<<< HEAD:classes/WaypointNode.m
-            obj.uncertainty_grid    = build_uncertainty_grid(obj.bds,obj.granul_htmp); 
-=======
             obj.uncertainty_grid    = build_uncertainty_grid(obj.bds, 'Granularity', obj.granularity); 
->>>>>>> origin/master:classes/WaypointNode.m
             if strcmp(cbf_mode, 'Additive')
                 s = obj.n;
             elseif strcmp(cbf_mode, 'Multiplicative')
@@ -86,19 +82,11 @@ classdef WaypointNode
                 ids                 = boolean(ones([1,obj.N]));
             else
                 ids                = sum((x(1:2,:) - obj.waypoints(1:2,:)).^2, 1) < 0.15;
-<<<<<<< HEAD:classes/WaypointNode.m
-                %theta_diff          = (x(3,:) - obj.waypoints(3,:));
-                %ids2                = abs(atan2(sin(theta_diff), cos(theta_diff))) < pi/4;
-                %ids                 = (ids1 & ids2);
-            end
-            obj                     = obj.gen_next_waypoint(x, ids);
-=======
                 % Deadlock Mitigation
                 ids                = ids | (obj.deadlock_counter > 10);
                 obj.deadlock_counter(ids) = 0;
             end
             obj    = obj.gen_next_waypoint(x, ids);
->>>>>>> origin/master:classes/WaypointNode.m
         end
         
         function obj = gen_next_waypoint(obj, x, ids)
@@ -131,11 +119,7 @@ classdef WaypointNode
                         p(:,i)                      = obj.waypoint_queue(1, 1:obj.n)';
                         obj.waypoint_queue(1,:)     = [];
                     end
-<<<<<<< HEAD:classes/WaypointNode.m
-                    obj.waypoints(:,ids(i))              = p(:,i);
-=======
                     obj.waypoints(:,ids(i))         = p(:,i);
->>>>>>> origin/master:classes/WaypointNode.m
                     iter = iter + 1;
                 end
             end
@@ -164,11 +148,7 @@ classdef WaypointNode
             new_data                                = [x_old(:,ids); x_dot; u]';        % new data shape: x x_dot u
             % Delete data with small u
             del_inds = (abs(u(1,:)) < 0.05) | (abs(u(2,:)) < 0.1);
-<<<<<<< HEAD:classes/WaypointNode.m
-            del_inds = del_inds | (abs(x_dot(3,:)) <= 0.1) | (abs(x_dot(3,:)) >= 1.5);
-=======
             del_inds = del_inds | (abs(x_dot(3,:)) < 0.1) | (abs(x_dot(3,:)) > 1.5);
->>>>>>> origin/master:classes/WaypointNode.m
             new_data(del_inds,:)      = [];                                             % Prune data with 0 u
             obj.data(end+1:end+size(new_data,1),:)  = new_data;
             
@@ -199,10 +179,6 @@ classdef WaypointNode
                 try 
                     models = load('models.mat');
                     models = models.temp;
-<<<<<<< HEAD:classes/WaypointNode.m
-                    %delete('models.mat');
-=======
->>>>>>> origin/master:classes/WaypointNode.m
                 catch e
                     e
                     models = [];
@@ -344,19 +320,6 @@ classdef WaypointNode
             end
             
         end
-<<<<<<< HEAD:classes/WaypointNode.m
-        
-        function obj = clean_up(obj)
-            %CLEAN_UP Delete any temporary files used for experiment 
-            
-            if strcmp(obj.comm_mode, 'FileSharing') && ~strcmp(obj.cbf_mode, 'Regular')
-                delete('data.mat')
-                delete('models.mat')
-            end
-            
-        end
-=======
->>>>>>> origin/master:classes/WaypointNode.m
     end
 end
 

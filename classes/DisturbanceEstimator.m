@@ -6,10 +6,6 @@ classdef DisturbanceEstimator
     properties (Constant)
         pub_topic                   = 'models';                         % topic to publish to on mqtt
         sub_topic                   = 'data';                           % topic to subscribe to on mqtt
-<<<<<<< HEAD:classes/DisturbanceEstimator.m
-        granul_htmp                 = 0.25;                             % granularity of heatmap
-=======
->>>>>>> origin/master:classes/DisturbanceEstimator.m
         threshold_data_num          = 50;                               % min # of new data required to recompute gp models
     end
     properties

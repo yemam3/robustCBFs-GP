@@ -8,16 +8,6 @@
 % space with the highest variance estimate. 
 
 % Initialization File
-<<<<<<< HEAD
-init;  
-
-%% Initialize 
-r                       = Robotarium('NumberOfRobots', N, 'ShowFigure', true); % Get Robotarium object used to communicate with the robots/simulator
-cbf_wrapper             = CBFwrapper(N, n, m, CBF_SPECS);
-pose_controller         = create_minnorm_controller(); 
-waypoint_node           = WaypointNode(N,n,m,CBF_SPECS.cbf_mode,COMM_MODE,IP,PORT);      % Disturbance Estimator
-data_saver              = DataSaver(N, CBF_SPECS.nominal_radius);                         % Data saving 
-=======
 init; mkdir(SAVE_PATH); 
 
 %% Initialize 
@@ -26,7 +16,6 @@ cbf_wrapper             = CBFwrapper(N, n, m, CBF_SPECS);
 pose_controller         = create_minnorm_controller(); 
 waypoint_node           = WaypointNode(N,n,m,CBF_SPECS.cbf_mode,COMM_MODE,IP,PORT);      % Disturbance Estimator
 data_saver              = DataSaver(N, CBF_SPECS.nominal_radius);                        % Data Saving 
->>>>>>> origin/master
 t_stamp                 = tic;
 
 % Main Loop
@@ -47,11 +36,7 @@ for t = 1:iterations
     [mus_, sigmas_] = waypoint_node.predict(x');
     [dxu, min_h] = cbf_wrapper.uni_barrier_certificate(dxu, x, [], mus_, sigmas_);
     %% Append Data to be saved for GP and save trajectory data
-<<<<<<< HEAD
-    if mod(t,5) == 0
-=======
     if mod(t,10) == 0
->>>>>>> origin/master
         waypoint_node = waypoint_node.append_traj_data(x, dxu, data_saver.x_old, data_saver.dxu_old);
     end
     if mod(t,50) == 0
@@ -68,17 +53,11 @@ for t = 1:iterations
     r.set_velocities(1:N, dxu);
     % Send the previously set velocities to the agents.  This function must be called!
     r.step();
-<<<<<<< HEAD
-end
-
-waypoint_node.plot_sigmas();
-=======
     waypoint_node = waypoint_node.deadlock_mitigation(dxu);
 end
 
 waypoint_node.plot_sigmas(SAVE_PATH);
 waypoint_node.animate_spatiotemp_mean_var(SAVE_PATH);
->>>>>>> origin/master
 waypoint_node.clean_up();
 % We should call r.call_at_scripts_end() after our experiment is over!
 r.debug();
