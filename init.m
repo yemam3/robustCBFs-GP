@@ -9,6 +9,7 @@ repo_path = fileparts(mfilename('fullpath'));
 addpath(genpath(repo_path));
 
 % Initialize Experimental Details
+<<<<<<< HEAD
 IS_SIM                          = 0;                            % Is this a Simulation? (if it is, we'll add some fake noise)
 COMM_MODE                       = 'FileSharing';                % Inter-Node Communication Mode ('FileSharing' or 'MQTT')
 CBF_SPECS.cbf_mode              = 'Multiplicative';                    % No/Additive/Multiplicative Disturbance: 'Regular', 'Additive', 'Multiplicative' 
@@ -21,15 +22,39 @@ n                               = 3;                            % Dimension of s
 m                               = 2;                            % Dimension of control u_i  (don't change)
 iterations                      = 10000/2;                      % Select the number of iterations for the experiment.
 date_string = datestr(datetime('now'),'HH:MM:SS.FFF');  % For Data Saving Purposes
+=======
+IS_SIM                          = 1;                            % Is this a Simulation? (if it is, we'll add some fake noise)
+COMM_MODE                       = 'FileSharing';                % Inter-Node Communication Mode ('FileSharing' or 'MQTT')
+CBF_SPECS.cbf_mode              = 'Multiplicative';             % No/Additive/Multiplicative Disturbance: 'Regular', 'Additive', 'Multiplicative' 
+CBF_SPECS.safety_radius         = 0.110;                        % How big is the safety radius between robots?
+CBF_SPECS.nominal_radius        = 0.110;                        % How big is the circle in reality? 
+CBF_SPECS.barrier_gain          = 200;
+CBF_SPECS.projection_distance   = 0.030;
+GRID_GRANULARITY                = 0.25;                         % Granularity of the discretization of the state space
+N                               = 4;                            % Number of Robots
+n                               = 3;                            % Dimension of state x_i (don't change)
+m                               = 2;                            % Dimension of control u_i  (don't change)
+iterations                      = 5000;                      % Select the number of iterations for the experiment.
+date_string = datestr(datetime('now'),'mmm-dd-HH-MM');          % For Data Saving Purposes
+>>>>>>> origin/master
 % Define IP & Port to be used 
 IP                              = 'localhost';                  % Robotarium: '192.168.1.8' Local: 'localhost'
 PORT                            = 1883;                         % Robotarium: 1884          Local: 1883
 % Data Saving Path
 SAVE_PATH                       = ['saved_data/robotarium_', CBF_SPECS.cbf_mode, '_', num2str(CBF_SPECS.safety_radius*100), '_', date_string, '/'];
+<<<<<<< HEAD
 mkdir(SAVE_PATH);
 % Suppress is not serializable warning (caused when saving data)
 warning('off', 'MATLAB:Java:ConvertFromOpaque');
 
+=======
+% Suppress is not serializable warning (caused when saving data)
+warning('off', 'MATLAB:Java:ConvertFromOpaque');
+% Create Directory to save data
+if ~isfolder('saved_data')
+    mkdir('saved_data');
+end
+>>>>>>> origin/master
 %% If we're using MQTT Need to Set some parameters
 if strcmp(COMM_MODE, 'MQTT')
     if IS_SIM
