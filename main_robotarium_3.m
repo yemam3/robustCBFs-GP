@@ -14,8 +14,6 @@ init;  mkdir(SAVE_PATH); rng(50);
 
 %% Initialize
 r                       = Robotarium('NumberOfRobots', N, 'ShowFigure', true); % Get Robotarium object used to communicate with the robots/simulator
-h=fill([0,0,-1.6,-1.6], [0,1.0,1.0,0], [1,1,0]);
-h.FaceAlpha=0.3;
 cbf_wrapper             = CBFwrapper(N, n, m, CBF_SPECS);
 pose_controller         = create_minnorm_controller(); 
 waypoint_node           = WaypointNode(N,n,m,CBF_SPECS.cbf_mode,COMM_MODE,IP,PORT);      % Disturbance Estimator

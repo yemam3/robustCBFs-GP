@@ -46,7 +46,7 @@ classdef CBFwrapper
                 sigmas_         = reshape(sigmas_',[obj.n,obj.m,obj.N]);
                 sigmas_(1,1,:)  = kd*sigmas_(1,1,:);
                 sigmas_(2,1,:)  = kd*sigmas_(2,1,:);
-                sigmas_(3,2,:)  = kd*sigmas_(3,2,:);
+                sigmas_(3,2,:)  = 0*sigmas_(3,2,:);
                 [dxu, min_h]    = obj.cbf_handle(dxu, x, obstacles, mus_ - sigmas_, mus_ + sigmas_);
             elseif strcmp(obj.cbf_mode, 'Additive')
                 mus_            = reshape(mus_',[obj.n,obj.N]);

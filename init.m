@@ -12,9 +12,9 @@ addpath(genpath(repo_path));
 IS_SIM                          = 1;                            % Is this a Simulation? (if it is, we'll add some fake noise)
 COMM_MODE                       = 'FileSharing';                % Inter-Node Communication Mode ('FileSharing' or 'MQTT')
 CBF_SPECS.cbf_mode              = 'Multiplicative';             % No/Additive/Multiplicative Disturbance: 'Regular', 'Additive', 'Multiplicative' 
-CBF_SPECS.safety_radius         = 0.110;                        % How big is the safety radius between robots?
-CBF_SPECS.nominal_radius        = 0.110;                        % How big is the circle in reality? 
-CBF_SPECS.barrier_gain          = 200;
+CBF_SPECS.safety_radius         = 0.105;                        % How big is the safety radius between robots?
+CBF_SPECS.nominal_radius        = 0.105;                        % How big is the circle in reality? 
+CBF_SPECS.barrier_gain          = 100;
 CBF_SPECS.projection_distance   = 0.030;
 GRID_GRANULARITY                = 0.25;                         % Granularity of the discretization of the state space
 N                               = 4;                            % Number of Robots
