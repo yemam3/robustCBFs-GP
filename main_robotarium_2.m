@@ -86,7 +86,8 @@ for t = 1:iterations
     end
 end
 
-waypoint_node.plot_sigmas();
+waypoint_node.plot_sigmas(SAVE_PATH);
+waypoint_node.animate_spatiotemp_mean_var(SAVE_PATH);
 waypoint_node.clean_up();
 % We should call r.call_at_scripts_end() after our experiment is over!
 r.debug();

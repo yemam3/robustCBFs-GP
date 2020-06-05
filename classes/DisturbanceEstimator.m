@@ -6,7 +6,6 @@ classdef DisturbanceEstimator
     properties (Constant)
         pub_topic                   = 'models';                         % topic to publish to on mqtt
         sub_topic                   = 'data';                           % topic to subscribe to on mqtt
-        granul_htmp                 = 0.25;                             % granularity of heatmap
         threshold_data_num          = 50;                               % min # of new data required to recompute gp models
     end
     properties
@@ -18,7 +17,6 @@ classdef DisturbanceEstimator
         m                                                               % Dimension of Input
         data                                                            % 3 x num_data_points (variable)
         gpr_models                                                      % cell(n x m)
-        uncertainty_grid                                                % meshgrid size(size(uncertainty_grid,1),obj.n+1)        
         num_new_data                                                    % number of new data points acquired
         % For Data Saving Purposes
         is_sim                                                          % Sim (1) or Real (0)?

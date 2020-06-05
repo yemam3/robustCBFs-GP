@@ -9,7 +9,7 @@ classdef WaypointNode
         sub_topic           = 'models';                     % Topic to subscribe to on MQTT
         bds                 = [-1.4, 1.4, -0.8, 0.8];       % Robotarium Bounds  
         dt                  = 0.033;                        % Robotarium Timestep
-        granul_htmp         = 0.25;                         % granularity of heatmap
+        granularity         = 0.25;                         % granularity of heatmap
     end
     properties
         comm_mode                                           % Options are 'MQTT', SharedFiles'
@@ -26,6 +26,7 @@ classdef WaypointNode
         all_mus                                             % size(size(uncertainty_grid,1),n*m,-1)
         gpr_models                                          % cell(n x m)
         counter_models                                      % counter to update models
+        deadlock_counter                                    % Deadlock Counter
     end
     
     methods
@@ -48,7 +49,7 @@ classdef WaypointNode
             obj.waypoints           = [];       
             obj.waypoint_queue      = [];
             % Intiailize Coordinates for uncertainty grid
-            obj.uncertainty_grid    = build_uncertainty_grid(obj.bds,obj.granul_htmp); 
+            obj.uncertainty_grid    = build_uncertainty_grid(obj.bds, 'Granularity', obj.granularity); 
             if strcmp(cbf_mode, 'Additive')
                 s = obj.n;
             elseif strcmp(cbf_mode, 'Multiplicative')
@@ -63,6 +64,7 @@ classdef WaypointNode
             % Gaussian Process Models
             obj.gpr_models          = [];
             obj.counter_models      = 0;
+            obj.deadlock_counter    = zeros([1, obj.N]);
         end
         
         function obj = waypoint_step(obj, x)
@@ -80,9 +82,9 @@ classdef WaypointNode
                 ids                 = boolean(ones([1,obj.N]));
             else
                 ids                = sum((x(1:2,:) - obj.waypoints(1:2,:)).^2, 1) < 0.15;
-                %theta_diff          = (x(3,:) - obj.waypoints(3,:));
-                %ids2                = abs(atan2(sin(theta_diff), cos(theta_diff))) < pi/4;
-                %ids                 = (ids1 & ids2);
+                % Deadlock Mitigation
+                ids                = ids | (obj.deadlock_counter > 10);
+                obj.deadlock_counter(ids) = 0;
             end
             obj    = obj.gen_next_waypoint(x, ids);
         end
@@ -121,6 +123,12 @@ classdef WaypointNode
                     iter = iter + 1;
                 end
             end
+        end
+        
+        function obj = deadlock_mitigation(obj, dxu)
+            % DEADLOCK_MITIGATION
+            % Increments deadlock counter for agents that did not move.    
+                obj.deadlock_counter = obj.deadlock_counter + double(sum(abs(dxu), 1) < .05);
         end
         
         function obj = clear_traj_data(obj)
@@ -264,7 +272,7 @@ classdef WaypointNode
             end
         end  
                     
-        function plot_sigmas(obj)
+        function plot_sigmas(obj, save_path)
             %PLOT_SIGMAS plots sigmas (variance) of the disturbance
             %estimation over time. 
             
@@ -277,7 +285,7 @@ classdef WaypointNode
             if length(size(obj.all_sigmas)) ~= 3
                 return
             end
-            figure(1000)
+            fig = figure(1000);
             hold on; grid on;
             ax          = gca;
             ax.FontSize = 20;
@@ -294,6 +302,13 @@ classdef WaypointNode
             end
             legend(lgd_entries, 'Interpreter','latex','FontSize',20,'Location','northeast');
             hold off;
+            savefig(fig, [save_path, 'sigma_plot.fig']);
+        end
+        
+        function animate_spatiotemp_mean_var(obj, save_path)
+            
+            generate_grid_animation(obj.bds, obj.granularity, squeeze(sum(obj.all_sigmas,2)), 'SavePath', [save_path, 'sigma_animation.gif'], 'ZTitle', '$\sum_{i,j} \sigma_{i,j}$');
+            generate_grid_animation(obj.bds, obj.granularity, squeeze(sum(obj.all_mus,2)), 'SavePath', [save_path, 'mu_animation.gif'], 'ZTitle', '$\sum_{i,j} \mu_{i,j}$');
         end
         
         function obj = clean_up(obj)

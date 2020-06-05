@@ -8,14 +8,14 @@
 % space with the highest variance estimate. 
 
 % Initialization File
-init;  
+init; mkdir(SAVE_PATH); 
 
 %% Initialize 
-r                       = Robotarium('NumberOfRobots', N, 'ShowFigure', true); % Get Robotarium object used to communicate with the robots/simulator
+r                       = Robotarium('NumberOfRobots', N, 'ShowFigure', true);          % Get Robotarium object used to communicate with the robots/simulator
 cbf_wrapper             = CBFwrapper(N, n, m, CBF_SPECS);
 pose_controller         = create_minnorm_controller(); 
 waypoint_node           = WaypointNode(N,n,m,CBF_SPECS.cbf_mode,COMM_MODE,IP,PORT);      % Disturbance Estimator
-data_saver              = DataSaver(N, CBF_SPECS.nominal_radius);                         % Data saving 
+data_saver              = DataSaver(N, CBF_SPECS.nominal_radius);                        % Data Saving 
 t_stamp                 = tic;
 
 % Main Loop
@@ -53,9 +53,11 @@ for t = 1:iterations
     r.set_velocities(1:N, dxu);
     % Send the previously set velocities to the agents.  This function must be called!
     r.step();
+    waypoint_node = waypoint_node.deadlock_mitigation(dxu);
 end
 
-waypoint_node.plot_sigmas();
+waypoint_node.plot_sigmas(SAVE_PATH);
+waypoint_node.animate_spatiotemp_mean_var(SAVE_PATH);
 waypoint_node.clean_up();
 % We should call r.call_at_scripts_end() after our experiment is over!
 r.debug();
