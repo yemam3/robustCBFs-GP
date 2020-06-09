@@ -1,6 +1,7 @@
 *.DS_Store
 robotarium_data/*
 saved_data/*
-GPY/*
+GP/*
 *~
 *.mat
+utilities/analyze_data.m
