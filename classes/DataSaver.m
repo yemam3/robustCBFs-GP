@@ -11,6 +11,7 @@ classdef DataSaver
         u_nom_data
         t_data
         min_h_data
+        dt_cbf_data
     end
     
     methods
@@ -25,9 +26,10 @@ classdef DataSaver
             obj.u_nom_data              = zeros(2,N,0);
             obj.t_data                  = [];
             obj.min_h_data              = [];
+            obj.dt_cbf_data             = [];
         end
         
-        function obj = save(obj, x, dxu, t, dxu_nom, min_h)
+        function obj = save(obj, x, dxu, t, dxu_nom, min_h, dt_cbf)
             %METHOD1 Summary of this method goes here
             %   Detailed explanation goes here
             obj.x_old           = x;
@@ -37,6 +39,7 @@ classdef DataSaver
             obj.t_data          = t;
             obj.u_nom_data      = cat(3, obj.u_nom_data, dxu_nom);
             obj.min_h_data      = cat(1, obj.min_h_data, min_h - obj.nominal_radius^2);
+            obj.dt_cbf_data     = cat(1, obj.dt_cbf_data, dt_cbf);
         end
         
         function plot_min_h(obj, save_path)

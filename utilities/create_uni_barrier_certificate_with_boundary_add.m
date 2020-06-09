@@ -78,7 +78,7 @@ function [ uni_barrier_certificate ] = create_uni_barrier_certificate_with_bound
     uni_barrier_certificate = @barrier_unicycle;
     
 
-    function [ dxu, ret ] = barrier_unicycle(dxu, x, obstacles, psi_1, psi_2)   
+    function [ dxu, ret, dt ] = barrier_unicycle(dxu, x, obstacles, psi_1, psi_2)   
         % BARRIER_UNICYCLE The parameterized barrier function
         %
         %   Args:
@@ -193,7 +193,9 @@ function [ uni_barrier_certificate ] = create_uni_barrier_certificate_with_bound
         %vhat(1:4)
         H = 2*(L_all')*L_all;
         f = -2*vhat'*(L_all')*L_all;
+        tic;
         vnew = quadprog(H, double(f), -A(1:num_constraints,1:2*num_robots), -b(1:num_constraints), [], [], -wheel_vel_limit*ones(2*num_robots,1), wheel_vel_limit*ones(2*num_robots,1), [], opts);
+        dt = toc;
         if isempty(vnew)
             dxu = zeros(2, num_robots);
             warning('No Solution for Barriers!')
