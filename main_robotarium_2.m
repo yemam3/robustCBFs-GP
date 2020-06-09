@@ -29,7 +29,9 @@ p_circ = [xybound(2)*cos(p_theta) xybound(2)*cos(p_theta+pi); xybound(4)*sin(p_t
 x_goal = p_circ(:,1:N);
 flag = 0; %flag of task completion
 
-waypoint_node = waypoint_node.update_models();
+if ~strcmp(CBF_SPECS.cbf_mode, 'Regular') 
+    waypoint_node = waypoint_node.update_models();
+end
 
 %% Main Loop
 for t = 1:iterations
