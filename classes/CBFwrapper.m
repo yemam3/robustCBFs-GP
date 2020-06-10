@@ -29,6 +29,7 @@ classdef CBFwrapper
             elseif strcmp(obj.cbf_mode, 'Additive')
                 obj.cbf_handle = create_uni_barrier_certificate_with_boundary_add('SafetyRadius', obj.safety_radius, 'BarrierGain', obj.barrier_gain, 'ProjectionDistance', obj.projection_distance);
             elseif strcmp(obj.cbf_mode, 'Regular')
+                %obj.cbf_handle = create_uni_barrier_certificate_with_boundary('Disturbance',0,'SafetyRadius', obj.safety_radius, 'BarrierGain', obj.barrier_gain, 'ProjectionDistance', obj.projection_distance);
                 obj.cbf_handle = create_uni_barrier_certificate_with_boundary_reg('Disturbance',0,'SafetyRadius', obj.safety_radius, 'BarrierGain', obj.barrier_gain, 'ProjectionDistance', obj.projection_distance);
             else 
                 error('CBF_MODE needs to be either Multiplicative or Additive! Check init file.')

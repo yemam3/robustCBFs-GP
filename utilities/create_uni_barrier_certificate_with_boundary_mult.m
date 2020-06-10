@@ -37,7 +37,7 @@ function [ uni_barrier_certificate ] = create_uni_barrier_certificate_with_bound
     addOptional(parser, 'WheelVelocityLimit', 12.5);
     addOptional(parser, 'BaseLength', 0.105);
     addOptional(parser, 'WheelRadius', 0.016);
-    addOptional(parser, 'MaxNumRobots', 10);
+    addOptional(parser, 'MaxNumRobots', 23);
     addOptional(parser, 'MaxObstacles', 50);
     addOptional(parser, 'MaxNumBoundaryPoints', 4);
     addOptional(parser, 'BoundaryPoints', [-1.6 1.6 -1.0 1.0]);
@@ -66,7 +66,7 @@ function [ uni_barrier_certificate ] = create_uni_barrier_certificate_with_bound
     L = [1,0;0,projection_distance];
     
     
-    max_num_constraints = nchoosek(max_num_robots, 2) + max_num_robots*max_num_boundaries + max_num_robots*max_num_obstacles; %+ max_num_robots;
+    max_num_constraints = 16*nchoosek(max_num_robots, 2) + max_num_robots*max_num_boundaries + max_num_robots*max_num_obstacles; %+ max_num_robots;
     A = zeros(max_num_constraints, 2*max_num_robots);
     b = zeros(max_num_constraints, 1);
 
@@ -162,11 +162,11 @@ function [ uni_barrier_certificate ] = create_uni_barrier_certificate_with_bound
             for j = (i+1):num_robots
                 % Difference between centroids of robots
                 diff = ps(:, i) - ps(:, j);
-                if sum(diff.^2,1) < ret
-                    ret = sum(diff.^2,1);
-                end
                 % h is the barrier function
                 hs = sum(diff.^2,1) - safety_radius^2;
+                if hs < ret
+                    ret = hs;
+                end
                 % We want to multiply diff by M in a way we can add
                 % the intervals (need to min, max)
                 diff_rep = repmat(diff, [1,2]);

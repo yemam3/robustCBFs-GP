@@ -68,11 +68,11 @@ waypoint_node.clean_up();
 save([SAVE_PATH, 'robotarium_data.mat'], 'waypoint_node', 'data_saver', 'cbf_wrapper');
 % Generate mean and sigma Animations
 data_saver.plot_min_h(SAVE_PATH);
-mean_u_diff = data_saver.plot_u_diff(SAVE_PATH);
-% Logger
-exp_logger.logMesg(['Mean CBF solution Time     = ' num2str(mean(data_saver.dt_cbf_data))]);
-exp_logger.logMesg(['mean(||u^* - u_{nom}||^2)  = ' num2str(mean_u_diff)]);
-exp_logger.logMesg(['Total Number of Iterations = ' num2str(t)]);
+u_diff = data_saver.plot_u_diff(SAVE_PATH);
+exp_logger.logMesg(['Mean CBF solution Time = ' num2str(mean(data_saver.dt_cbf_data))]);
+exp_logger.logMesg(['mean(||u^* - u_{nom}||^2) = ' num2str(mean(u_diff))]);
+exp_logger.logMesg(['var(||u^* - u_{nom}||^2)  = ' num2str(var(u_diff))]);
+exp_logger.logMesg(['max(||u^* - u_{nom}||^2)  = ' num2str(max(u_diff))]);
 exp_logger.save_messages([SAVE_PATH, 'logger.txt']);
 % We should call r.call_at_scripts_end() after our experiment is over!
 r.debug();

@@ -87,7 +87,7 @@ classdef DisturbanceEstimator
                 % g(x)_32
                 y(:,6)                          = x_dot(:,3) ./ u(:,2) - 1;
                 % Prune Extremly Noisy Data (Outliers)
-                bad_idxs = any(abs(y) > 0.6, 2);
+                bad_idxs = any(abs(y) > 0.6, 2) | (abs(y(:,6)) > 0.4);
                 x(bad_idxs, :)          = [];
                 y(bad_idxs, :)          = [];
                 % Fit Model

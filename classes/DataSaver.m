@@ -38,7 +38,7 @@ classdef DataSaver
             obj.u_data          = cat(3,obj.u_data, dxu);
             obj.t_data          = t;
             obj.u_nom_data      = cat(3, obj.u_nom_data, dxu_nom);
-            obj.min_h_data      = cat(1, obj.min_h_data, min_h - obj.nominal_radius^2);
+            obj.min_h_data      = cat(1, obj.min_h_data, min_h);
             obj.dt_cbf_data     = cat(1, obj.dt_cbf_data, dt_cbf);
         end
         
@@ -55,17 +55,16 @@ classdef DataSaver
             savefig(fig, [save_path, 'min_h_plot.fig']);
         end
         
-        function mean_error = plot_u_diff(obj, save_path)
+        function u_diff = plot_u_diff(obj, save_path)
             % Plot difference between u_nom and u over time
-            u_error = squeeze(sum(sum((obj.u_data - obj.u_nom_data).^2, 1),2));
-            iterations = numel(u_error);
+            u_diff = squeeze(sum(sum((obj.u_data - obj.u_nom_data).^2, 1),2));
+            iterations = numel(u_diff);
             fig = figure(1002);hold on;grid on;
-            plot(1:iterations, u_error, 'LineWidth', 4); 
+            plot(1:iterations, u_diff, 'LineWidth', 4); 
             ax = gca;
             ax.FontSize = 40;
             xlabel('iter', 'FontSize', 50); ylabel('(u - u_{nom})^2', 'FontSize', 50);
             savefig(fig, [save_path, 'u_diff_plot.fig']);
-            mean_error = mean(u_error);
         end    
     end
 end

@@ -127,15 +127,14 @@ function [ uni_barrier_certificate ] = create_uni_barrier_certificate_with_bound
             for j = (i+1):num_robots
                 diff = ps(:, i) - ps(:, j);
                 hs = sum(diff.^2,1) - safety_radius^2;
-                
+                if hs < ret
+                    ret = hs;
+                end
                 h_dot_i = 2*(diff)'*Ms(:,2*i-1:2*i)*D;
                 h_dot_j = -2*(diff)'*Ms(:,2*j-1:2*j)*D;                
                 A(count, (2*i-1):(2*i)) = h_dot_i;
                 A(count, (2*j-1):(2*j)) = h_dot_j;
                 b(count) = -gamma*hs.^3 - min(h_dot_i*disturb) - min(h_dot_j*disturb);  %repmat(h_i_disturbs, num_disturbs, 1) + repelem(h_j_disturbs, num_disturbs, 1);
-                if sum(diff.^2,1) < ret
-                   ret = sum(diff.^2,1); 
-                end
                 count = count + 1;
             end
         end
