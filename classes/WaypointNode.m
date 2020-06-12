@@ -210,10 +210,10 @@ classdef WaypointNode
             % Update Waypoint Queue
             [~, inds]                   = sort(-obj.uncertainty_grid(:,4));
             obj.waypoint_queue          = obj.uncertainty_grid(inds, :);
-            % Remove Points the robots are currently going to
             if isempty(obj.waypoints)
-               return; 
+                return
             end
+            % Remove Points the robots are currently going to
             for i = 1:obj.N
                obj.waypoint_queue(all(obj.waypoint_queue(:,1:3) == obj.waypoints(:,i)',2),:) = [];
             end
@@ -309,7 +309,9 @@ classdef WaypointNode
         end
         
         function animate_spatiotemp_mean_var(obj, save_path)
-            
+            if isempty(obj.gpr_models)
+                return
+            end
             generate_grid_animation(obj.bds, obj.granularity, squeeze(sum(obj.all_sigmas,2)), 'SavePath', [save_path, 'sigma_animation.gif'], 'ZTitle', '$\sum_{i,j} \sigma_{i,j}$');
             generate_grid_animation(obj.bds, obj.granularity, squeeze(sum(obj.all_mus,2)), 'SavePath', [save_path, 'mu_animation.gif'], 'ZTitle', '$\sum_{i,j} \mu_{i,j}$');
         end

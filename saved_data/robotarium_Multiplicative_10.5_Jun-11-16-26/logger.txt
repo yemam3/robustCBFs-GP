@@ -1,0 +1,15 @@
+Logger for experiment type 3 on 11-Jun-2020 16:26:14
+
+
+#### CBF SPECIFICATIONS ####
+	cbf_mode= Multiplicative
+	safety_radius= 0.105
+	nominal_radius= 0.105
+	barrier_gain= 700
+	projection_distance= 0.03
+##########################
+
+Mean CBF solution Time = 0.0020924
+mean(||u^* - u_{nom}||^2) = 0.79733
+var(||u^* - u_{nom}||^2)  = 3.8138
+max(||u^* - u_{nom}||^2)  = 14.102

@@ -86,9 +86,10 @@ classdef DisturbanceEstimator
                 y(:,2)                          = x_dot(:,2) ./ u(:,1) - sin(x(:,3));
                 % g(x)_32
                 y(:,6)                          = x_dot(:,3) ./ u(:,2) - 1;
-                % Prune Outliers
-                x(abs(y(:, 6)) >= 0.8, :)          = [];
-                y(abs(y(:, 6)) >= 0.8, :)          = [];
+                % Prune Extremly Noisy Data (Outliers)
+                bad_idxs = any(abs(y) > 0.6, 2) | (abs(y(:,6)) > 0.4);
+                x(bad_idxs, :)          = [];
+                y(bad_idxs, :)          = [];
                 % Fit Model
                 obj.gpr_models{1,1}             = fitrgp(x, y(:,1)); 
                 obj.gpr_models{2,1}             = fitrgp(x, y(:,2)); 
