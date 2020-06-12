@@ -12,8 +12,11 @@
 % Initialization File
 init;  mkdir(SAVE_PATH); rng(50);
 
+
 %% Initialize
 r                       = Robotarium('NumberOfRobots', N, 'ShowFigure', true); % Get Robotarium object used to communicate with the robots/simulator
+%rectangle('Position', [-1.6, 0, 1.6, 1], 'FaceColor', 'y', 'EdgeColor', 'k')
+
 cbf_wrapper             = CBFwrapper(N, n, m, CBF_SPECS);
 pose_controller         = create_minnorm_controller(); 
 waypoint_node           = WaypointNode(N,n,m,CBF_SPECS.cbf_mode,COMM_MODE,IP,PORT);      % Disturbance Estimator
@@ -52,12 +55,12 @@ for t = 1:iterations
         save([SAVE_PATH, 'robotarium_data.mat'], 'waypoint_node', 'data_saver', 'cbf_wrapper');
     end
     %% Add Multiplicative Disturbance
-    dxu(:, x(1,:) < 0 & x(2,:) > 0) = 0.80 * dxu(:, x(1,:) < 0 & x(2,:) > 0);
+    %dxu(:, x(1,:) < 0 & x(2,:) > 0) = 0.80 * dxu(:, x(1,:) < 0 & x(2,:) > 0);
     %% Send velocities to agents
     % Set velocities of agents 1,...,N
     r.set_velocities(1:N, dxu);
     % Send the previously set velocities to the agents.  This function must be called!
-    r.step();
+    r.step_no_error();
     waypoint_node = waypoint_node.deadlock_mitigation(dxu);
 end
 

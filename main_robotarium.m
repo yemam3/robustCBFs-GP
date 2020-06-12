@@ -53,7 +53,7 @@ for t = 1:iterations
     % Set velocities of agents 1,...,N
     r.set_velocities(1:N, dxu);
     % Send the previously set velocities to the agents.  This function must be called!
-    r.step();
+    r.step_no_error();
     waypoint_node = waypoint_node.deadlock_mitigation(dxu);
 end
 
