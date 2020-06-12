@@ -11,16 +11,16 @@ addpath(genpath(repo_path));
 % Initialize Experimental Details
 IS_SIM                          = 0;                            % Is this a Simulation? 
 COMM_MODE                       = 'FileSharing';                % Inter-Node Communication Mode ('FileSharing' or 'MQTT')
-CBF_SPECS.cbf_mode              = 'Multiplicative';                    % No/Additive/Multiplicative Disturbance: 'Regular', 'Additive', 'Multiplicative' 
-CBF_SPECS.safety_radius         = 0.105;                        % How big is the safety radius between robots?
-CBF_SPECS.nominal_radius        = 0.105;                        % How big is the circle in reality? 
+CBF_SPECS.cbf_mode              = 'Regular';                    % No/Additive/Multiplicative Disturbance: 'Regular', 'Additive', 'Multiplicative' 
+CBF_SPECS.safety_radius         = 0.12;                        % How big is the safety radius between robots?
+CBF_SPECS.nominal_radius        = 0.12;                        % How big is the circle in reality? 
 CBF_SPECS.barrier_gain          = 700;
 CBF_SPECS.projection_distance   = 0.030;
 GRID_GRANULARITY                = 0.25;                         % Granularity of the discretization of the state space
-N                               = 4;                            % Number of Robots
+N                               = 7;                            % Number of Robots
 n                               = 3;                            % Dimension of state x_i (don't change)
 m                               = 2;                            % Dimension of control u_i  (don't change)
-iterations                      = 5000*1;                       % Select the number of iterations for the experiment.
+iterations                      = 50000;                       % Select the number of iterations for the experiment.
 exp_date                        = datetime('now');
 date_string = datestr(exp_date,'mmm-dd-HH-MM');                 % For Data Saving Purposes
 % Define IP & Port to be used 
