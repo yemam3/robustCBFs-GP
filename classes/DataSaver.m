@@ -1,6 +1,10 @@
 classdef DataSaver
     %DATASAVER Saves Data from Robotarium Experiment
     
+    properties (Constant)
+        dt_step = .033; % s
+    end
+    
     properties
         N
         nominal_radius
@@ -46,12 +50,16 @@ classdef DataSaver
             % Plot min h_ij over time
             iterations = numel(obj.min_h_data);
             fig = figure(1001);hold on;grid on;
-            plot(1:iterations, obj.min_h_data, 'LineWidth', 4); 
-            plot(1:iterations,zeros(1,iterations),'r', 'LineWidth', 4)
-            ylim([-0.1,0.6])
+            plot([1:iterations]*obj.dt_step, obj.min_h_data, 'LineWidth', 4); 
+            plot([1:iterations]*obj.dt_step,zeros(1,iterations),'r', 'LineWidth', 4)
+            ylim([-0.05,0.3])
+            xlim([0,iterations*obj.dt_step])
             ax = gca;
             ax.FontSize = 40;
-            xlabel('iter', 'FontSize', 50); ylabel('min_{ij}(h_ij(t))', 'FontSize', 50);
+            %ax.GridColor = [0 .5 .5];
+            %ax.GridLineStyle = '--';
+            ax.GridAlpha = 0.7;
+            xlabel('Time (s)', 'FontSize', 50, 'Interpreter', 'Latex'); ylabel('$\textrm{min}_{ij}(h_{ij}(t))$', 'FontSize', 50, 'Interpreter', 'Latex');
             savefig(fig, [save_path, 'min_h_plot.fig']);
         end
         
@@ -60,10 +68,10 @@ classdef DataSaver
             u_diff = squeeze(sum(sum((obj.u_data - obj.u_nom_data).^2, 1),2));
             iterations = numel(u_diff);
             fig = figure(1002);hold on;grid on;
-            plot(1:iterations, u_diff, 'LineWidth', 4); 
+            plot([1:iterations]*obj.dt_step, u_diff, 'LineWidth', 4); 
             ax = gca;
             ax.FontSize = 40;
-            xlabel('iter', 'FontSize', 50); ylabel('(u - u_{nom})^2', 'FontSize', 50);
+            xlabel('Time ($s$)', 'FontSize', 50, 'Interpreter', 'Latex'); ylabel('(u - u_{nom})^2', 'FontSize', 50, 'Interpreter', 'Latex');
             savefig(fig, [save_path, 'u_diff_plot.fig']);
         end    
     end
