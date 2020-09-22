@@ -53,7 +53,11 @@ for t = 1:iterations
     % Set velocities of agents 1,...,N
     r.set_velocities(1:N, dxu);
     % Send the previously set velocities to the agents.  This function must be called!
-    r.step_no_error();
+    if ~IS_SIM
+        r.step_no_error();
+    else
+        r.step();
+    end
     waypoint_node = waypoint_node.deadlock_mitigation(dxu);
 end
 

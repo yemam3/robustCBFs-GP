@@ -86,7 +86,11 @@ for t = 1:iterations
     % Set velocities of agents 1,...,N
     r.set_velocities(1:N, dxu);
     % Send the previously set velocities to the agents.  This function must be called!
-    r.step_no_error();
+    if ~IS_SIM
+        r.step_no_error();
+    else
+        r.step();
+    end
     %% Save old states to be used for data collection
     data_saver      = data_saver.save(x, dxu, toc(t_stamp), dxu_nom, min_h, dt_cbf);
     %% Update Trace Plots
