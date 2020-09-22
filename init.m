@@ -11,7 +11,7 @@ addpath(genpath(repo_path));
 % Initialize Experimental Details
 IS_SIM                          = 0;                            % Is this a Simulation? 
 COMM_MODE                       = 'FileSharing';                % Inter-Node Communication Mode ('FileSharing' or 'MQTT')
-CBF_SPECS.cbf_mode              = 'Multiplicative';                    % No/Additive/Multiplicative Disturbance: 'Regular', 'Additive', 'Multiplicative' 
+CBF_SPECS.cbf_mode              = 'Multiplicative';             % No/Additive/Multiplicative Disturbance: 'Regular', 'Additive', 'Multiplicative' 
 CBF_SPECS.safety_radius         = 0.105;                        % How big is the safety radius between robots?
 CBF_SPECS.nominal_radius        = 0.105;                        % How big is the circle in reality? 
 CBF_SPECS.barrier_gain          = 700;
