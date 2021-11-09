@@ -17,7 +17,7 @@
 4. Specify the IP and PORT to be used for the communication (e.g. `localhost`, `1883`)
 5. Make sure to add `mqtt_matlab_interface` to the path (edit init file)
 
-#### File Sharing
+#### File Sharing (not recommended)
 1. If both nodes can share files (e.g. on same computer), we can just communicate using writing/reading files
 2. Set the `COMM_MODE` to `FileSharing` in the `init.m` file
 
